@@ -1,0 +1,12 @@
+*.gz
+*.aux
+*.bcf
+*.log
+*.out
+*.fls
+*.run.xml
+*.fdb_latexmk
+*.dict
+*.toc
+settings.json
+

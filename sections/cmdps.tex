@@ -1,0 +1,118 @@
+The \textit{Constrained Markov Decision Process} (CMDP) is an extension of the above-defined MDP that incorporates a cost function as well as constraints on that cost function, we define the CMDP as the following $8$-tuple:
+\begin{align*}
+    \text{CMDP} = (S,A,P,\bm{\nu},\bm{r},\Psi,\bm{b},\gamma),
+\end{align*}
+where the terms $S,A,P,\bm{\nu},\bm{r},\gamma$ are defined as in an unconstrained MDP (see section \ref{sec:unconstrained_mds}) but we further incorporate a cost function $\Psi:S\times A \rightarrow \mathbb{R}^{l}$ which, in the discrete state-action setting, we can conveniently represent as a matrix $\Psi\in\mathbb{R}^{nm \times l}$ (here $l$ is the constraint-dimensionality). We denote the $i$-th element of the output of the cost function $\Psi$: $\psi_i$. The constraint vector $\bm{b} \in \mathbb{R}^l$ allows us to define our CMDP constraints. 
+
+\subsubsection{Discounted Costs, Cost-Value, Cost-Quality, Cost-Objective function}
+
+We define equivalent quantities (discounted cost, value, quality and objective) for cost to the ones we defined for the reward function.
+
+\begin{definition}
+    (\textbf{Discounted Cost}) 
+    For a given trajectory $\tau$ of the MDP $\textit{M}$ one can compute the $i$-th element of the \textbf{discounted cost} $U(\tau)\in\mathbb{R}^l$ as follows:
+    \begin{align*}
+        U(\tau,i) = (1-\gamma) \lim_{T \rightarrow + \infty} \sum_{T}^{t=0} \gamma^t \psi_i(s_t,a_t),
+    \end{align*}
+    we denote the full vector obtained by stack elements as defined above as $\bm{U}(\tau)$,
+    \begin{align*}
+        \bm{U}(\tau) =  (1-\gamma) \lim_{T \rightarrow + \infty}   \sum_{T}^{t=0} \gamma^t \Psi(s_t,a_t).
+    \end{align*}
+\end{definition}
+
+\begin{definition}
+    (\textbf{Cost-Value Function})
+    For a given policy $\pi:S\rightarrow \Delta A$ and under the assumption that the agent starts at some state $s_0$, we define the \textbf{cost-value function} $\bm{V}_\Psi^\pi:S\rightarrow \mathbb{R}^l$ as:
+    \begin{align*}
+        \bm{V}_\Psi^\pi(s) = \mathbb{E}\Big[ \bm{U}(\tau) \Big| s_0  = s, \pi \Big] = \mathbb{E}\Bigg[  (1-\gamma) \sum_{t=0}^{+\infty} \gamma^t \Psi(s_t,a_t)  \Big| s_0  = s, \pi \Bigg].
+    \end{align*}
+\end{definition}
+
+\begin{definition}
+    (\textbf{Cost-Quality Function})
+    For a given policy $\pi:S\rightarrow \Delta A$ and under the assumption that the agent starts at some state $s_0$ with first action $a_0$, we define the \textbf{cost-quality function} $\bm{Q}^\pi:S\times A \rightarrow \mathbb{R}^l$ as:
+    \begin{align*}
+        \bm{Q}_\Psi^\pi(s,a) = \mathbb{E}\Big[ \bm{U}(\tau)  \Big| s_0  = s, a_0  = a, \pi \Big] = \mathbb{E}\Bigg[  (1-\gamma) \sum_{t=0}^{+\infty} \gamma^t  \Psi(s_t,a_t) \Big| s_0  = s, a_0 = a, \pi \Bigg].
+    \end{align*}
+\end{definition}
+
+\begin{definition}
+    (\textbf{Cost-Objective Function})
+    For a given policy $\pi:S\rightarrow \Delta A$ and under an initial state distribution $\bm{\nu} \in \Delta_S$ we define the \textbf{cost-objective function} as:
+    \begin{align*}
+        \bm{J}_\Psi^\nu(\pi) = \mathbb{E}\Big[  \bm{U}(\tau) \Big| s_0 \sim \nu, \pi \Big] =  \mathbb{E}\Big[ V_\Psi^\pi(s) \Big| s \sim \nu\Big].
+    \end{align*}
+\end{definition}
+
+\begin{observation}
+    As in the unconstrained MDP setting, one can rewrite the cost-objective as a function of the occupancy measure:
+    \begin{align*}
+        \Psi^T \bm{\mu}^\pi = \bm{J}_\Psi^\nu(\pi).
+    \end{align*}
+\end{observation}
+
+\subsubsection{Feasibility}
+
+The main difference between \textit{MDP}s and \textit{CMDP}s is that in a \textit{CMDP}, not all policies are admissible, in order to be feasible, a policy needs to meet the constraint:
+\begin{align*}
+    \bm{J}_\Psi^\nu(\pi) \leq \bm{b},
+\end{align*}
+or equivalently
+\begin{align*}
+    \Psi^T \bm{\mu}^\pi \leq \bm{b}.
+\end{align*}
+This restricts the set of admissible policies and occupancy measures and allows us to define the \textit{feasible set} of the CMDP.
+\begin{definition}
+    (\textbf{Feasible Set}) Given a CMPD $\textit{C}$ we define it's \textbf{feasible set} $\mathcal{F}$ as the set of points that satisfy the bellman flow constraints without violating the constraints:
+    \begin{align*}
+        \mathcal{F} := \big\{ \mu \in \mathcal{M} \big| \Psi^T\mu\leq \bm{b} \big\}.
+    \end{align*}
+\end{definition}
+
+\subsubsection{Goal of the CMDP, formulating optimization problems}
+
+The goal of a CMDP can be stated as follows:
+\begin{align}
+    \begin{aligned}
+    \max_{\pi \in \Pi} & ~ J^\nu(\pi), \\
+    \text{s.t} & ~ \bm{J}_\Psi^\nu(\pi)\leq \bm{b},
+    \end{aligned}
+    \label{eq:pb_constrained_direct_policy_opt}
+\end{align}
+which in plain english reads as "\textit{find the policy that maximizes the expected discounted reward while keeping the expected discounted cost below the constraints}". As we already did in section \ref{sec:opt_sol_mdp}, we can reformulate our problems in terms of the occupancy measure:
+
+\begin{equation}
+    \begin{aligned}
+        \max_{\bm{\mu}} & ~~ \bm{r}^T\bm{\bm{\mu}}-f(\mu), \\
+        \text{s.t.} & ~~  (E-\gamma P)^T  \bm{\mu} = (1-\gamma) \bm{\nu}, \\
+                    & ~~  \Psi^T \bm{\mu} \leq \bm{b},
+    \end{aligned}
+    \label{eq:pb_constrained_occupancy_opt}
+\end{equation}
+as we showed in section \ref{sec:opt_sol_mdp} for the unconstrained setting, this yields a concave program, with linear constraints, which becomes an LP in the special case where $\Omega(\pi) = 0$.
+
+\subsubsection{Solution Maps}
+
+We formulate the following solution maps are associated with the solutions of the optimization problems associated with the (constrained or unconstrained) MDPs.
+
+\begin{definition}
+    \label{def:policy_solmap}
+    (\textbf{Policy Solution Map})
+    Given a CMDP $\textit{C}$ and it's reward $\bm{r}$, we define it's \textbf{policy solution map} as:
+    \begin{align*}
+        \text{OPT}_{\pi}(\bm{r}) = \arg \max_{\pi\in \Pi}  J^\nu(\pi)
+    \end{align*}
+\end{definition}
+
+\begin{definition}
+    \label{def:occupancy_solmap}
+    (\textbf{Occupancy Solution Map})
+    Given a CMDP $\textit{C}$ and it's reward $\bm{r}$, we define it's \textbf{occupancy solution map} as:
+    \begin{align*}
+        \text{OPT}_{\mu}(\bm{r}) = \arg \max_{\mu\in \mathcal{F}}  J^\nu(\bm{\mu})
+    \end{align*}
+\end{definition}
+
+\begin{observation}
+    The solution maps from def \ref{def:policy_solmap} and from def \ref{def:occupancy_solmap}  are equivalent under the bijection from observation \ref{obs:policy_occupancy_bijection}, since by observation \ref{obs:mu_pi_objective} the optimized values are identical.
+\end{observation}

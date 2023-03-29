@@ -1,0 +1,88 @@
+\documentclass[11pt]{article}
+
+\usepackage{sectsty}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{epigraph} %quotes
+\usepackage{amssymb} %math symbols
+\usepackage{mathtools} %more math stuff
+\usepackage{amsthm} %theorems, proofs and lemmas
+\usepackage[ruled,vlined]{algorithm2e} %algoritms/pseudocode
+\usepackage{bm} 
+\usepackage{subfiles} 
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+\addbibresource{Bibliography.bib}
+
+%% Theorem notation
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{problem}{Problem}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{observation}{Observation}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{proposition}{Proposition}[section]
+
+%% declaring abs so that it works nicely
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}%
+
+% Swap the definition of \abs* and \norm*, so that \abs
+% and \norm resizes the size of the brackets, and the 
+% starred version does not.
+\makeatletter
+\let\oldabs\abs
+\def\abs{\@ifstar{\oldabs}{\oldabs*}}
+%
+\let\oldnorm\norm
+\def\norm{\@ifstar{\oldnorm}{\oldnorm*}}
+\makeatother
+
+% Marges
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=5.5in
+\textheight=9.0in
+\headsep=0.5in
+
+
+\title{Notes on Sample Complexity of IRL on Constrained MDPs and Bandit problems setting}
+\date{\today}
+\author{Titouan Renard}
+
+\begin{document}
+\maketitle	
+
+\tableofcontents
+
+\section{Constrained and Unconstrained MDPs}
+\subfile{sections/mdps.tex}
+
+\newpage
+\subsection{Constrained Markov Decision Processes} \label{sec:cmdps}
+\subfile{sections/cmdps.tex}
+
+\newpage
+\subsection{Inverse Reinforcement Learning} \label{sec:irl}
+\subfile{sections/irl.tex}
+
+\newpage
+\section{Min-Max Optimization and Saddle Point Problems}
+\subfile{sections/saddle_points.tex}
+
+\newpage
+\section{Constrained and Unconstrained Bandits}
+\subfile{sections/bandits.tex}
+\subfile{sections/regularizers.tex}
+
+\newpage
+\printbibliography
+
+\end{document}

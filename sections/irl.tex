@@ -1,0 +1,61 @@
+We will now consider the inverse problem to the MDP and CMDP problems that we discussed before, \textit{Inverse Reinforcement Learning} (IRL). In the IRL setting (\textit{on a known MDP}) we are given an \textit{MDP} or a \textit{CMDP} without its reward:
+\begin{align*}
+    \textit{CMDP} \setminus \bm{r} = (S,A,P,\bm{\nu},\Psi,\bm{b},\gamma),
+\end{align*}
+as well as a dataset $\mathcal{D}$ of expert example in the form of trajectories:
+\begin{align*}
+    \mathcal{D} = \{  \tau_1,\tau_2,...,\tau_N\},
+\end{align*}
+produced by some expert policy $\pi^E$. Assuming the dataset is large enough (which we will do as first), this is equivalent to getting an approximation of the expert's occupancy measure $\bm{\mu}^E$. In the IRL setting we also generally restrict rewards to a reward class $\mathcal{R}$ (which is some arbitrary convex set in $\mathbb{R}^{nm}$).
+\begin{assumption}
+    \label{assumption:realizability}
+    (\textbf{Realizability})
+    We assume that the expert policy is optimal w.r.t. some reward $\bm{r}^E \in \mathcal{R}$, i.e. 
+    \begin{align*}
+        \bm{\mu}^E = \text{OPT}_{\mu}(\bm{r}^E).
+    \end{align*}
+\end{assumption}
+\noindent
+The goal of the IRL problem is to recover a reward $\hat{\bm{r}}$ s.t. the expert $\bm{\mu}^E = \text{OPT}_{\mu,\Psi}(\hat{\bm{r}})$ (the expert is optimal for that reward).
+
+\begin{proposition}
+    \label{proposition:minmaxIRL}
+    (\textbf{Min-Max Program to solve IRL})
+    If assumption \ref{assumption:realizability} is true, then the rewards optimizing the program:
+    \begin{equation}
+        \label{eq:minmaxIRL}
+        \begin{aligned}
+            \min_{\bm{r}\in\mathcal{R}}\max_{\bm{\mu}\in\mathcal{F}} \bm{r}^T(\bm{\mu}-\bm{\mu}^E)-f(\bm{\mu}),
+        \end{aligned}
+    \end{equation}
+    are exactly the rewards in $\mathcal{R}$ for which $\bm{\mu}^E$ is optimal.
+\end{proposition}
+\begin{proof}
+    (Of proposition \ref{proposition:minmaxIRL}) We can rewrite an equivalent problem to (\ref{eq:minmaxIRL}) as follows:
+    \begin{align*}
+        \min_{\bm{r}\in\mathcal{R}}\max_{\bm{\mu}\in\mathcal{F}} \bm{r}^T\bm{\mu}-f(\bm{\mu}) - \bm{r}^T \bm{\mu}^E + f(\bm{\mu}^E),
+    \end{align*}
+    where the addition of the $f(\bm{\mu}^E)$ term has no influence on the optimizers, as it is a function of neither of the decision variables. For convenience we write:
+    \begin{align*}
+        \bm{r}^T\bm{\mu}-f(\bm{\mu}) - \bm{r}^T \bm{\mu}^E + f(\bm{\mu}^E) = L(\bm{r},\bm{\mu}).
+    \end{align*}
+    For any fixed $\bm{r}\in\mathcal{R}$ it holds that 
+    \begin{align*}
+        \arg\max_{\bm{\mu}\in\mathcal{F}} \bm{r}^T\bm{\mu}-f(\bm{\mu}) - \overbrace{\bm{r}^T \bm{\mu}^E + f(\bm{\mu}^E)}^\text{constant w.r.t $\bm{\mu}$} = \text{OPT}_\mu(\bm{r}), ~\bm{r}\in \mathcal{R},
+    \end{align*}
+    i.e. the optimal $\bm{\mu}$ for any fixed $\bm{r} \in \mathcal{R}$ gives the optimal policy. Moreover, for any fixed $\bm{r} \in \mathcal{R}$, we get that:
+    \begin{align*}
+        \max_{\bm{\mu}\in\mathcal{F}} L(\bm{r},\bm{\mu}).\geq 0, ~\bm{r}\in \mathcal{R},
+    \end{align*}
+    since:
+    \begin{enumerate}
+        \item either $\mu^E$ maximizes the value $\bm{r}^T \bm{\mu}^E - f(\bm{\mu}^E)$, in which case, we the optimizer can set $\bm{\mu} = \bm{\mu}^E$ and get $ L(\bm{r},\bm{\mu})=0$,
+        \item or  $\mu^E$ does not maximize the value $\bm{r}^T \bm{\mu}^E - f(\bm{\mu}^E)$, in  which case we get $ L(\bm{r},\bm{\mu})>0$.
+    \end{enumerate}
+    Observe that the lower bound ($ L(\bm{r},\bm{\mu})=0$) is only achieved if $\bm{r}^T \bm{\mu}^E - f(\bm{\mu}^E)=\bm{r}^T \bm{\mu} - f(\bm{\mu})$, i.e. if $\bm{\mu}^E \in \arg \max_{\bm{\mu} \in \mathcal{F}} \bm{r}^T \bm{\mu}^E + f(\bm{\mu}^E)$ which is equivalent to $\bm{\mu}^E \in  \text{OPT}_\mu(\bm{r})$. I.e. the optimal reward $\bm{r}^*$ of the min-max problem is such that the expert $\bm{\mu}^E$ is optimal w.r.t $\bm{r}^*$.
+    
+\end{proof}
+
+% \begin{proposition}
+%     (\textbf{Min-Max Program to solve IRL}) 
+% \end{proposition}
