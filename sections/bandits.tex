@@ -1,4 +1,4 @@
-In order to work towards a better understanding of the IRL problems at hand we first restrict ourselves to the study of a single-state MDP, which is equivalent to a \textit{$K$-Armed Bandit Problem}. 
+In order to work towards a better understanding of the IRL problems at hand we first restrict ourselves to the study of a single-state MDP, which is equivalent to a \textit{$K$-Armed Bandit Problem}.
 
 \subsection{A few observations about Bandit problems}
 
@@ -30,132 +30,97 @@ The "\textit{bandit}" (a.k.a single state MDP has a few interesting properties t
     In the bandit setting, the Bellman Flow constraints are always trivially satisfied (the probability that the agent ends up in state $s$ at time $t+1$ is always $1$). 
 \end{observation}
 
-Our algorithm will also require us to define the Rényi Entropy, which we do below.
-\begin{definition}
-    (\textbf{Rényi Entropy}) For a discrete random variable $X$, the Rényi Entropy of order $\alpha$ is defined as: 
-    \[H_\alpha(X) = \frac{1}{1-\alpha} \log \Bigl( \sum^n_{i=1}p_i^\alpha \Bigr). \]
-    Conveniently, it can also be denoted as a function of the $L_\alpha$ norm of the vector of probabilities $\bm{p}_X$ associated with the random variable $X$:
-    \begin{align*}
-        H_\alpha(X)= H_\alpha(\bm{p}_X)= \frac{\alpha}{1- \alpha} \log \|\bm{p}_X \|_\alpha.
-    \end{align*}
-\end{definition}
+% \subsection{A first stab at proving convergence of IRL : the Unconstrained Inverse Bandit Problem} \label{sec:unconstrained_bandit_problem}
+% Consider a MDP $\textit{M}$ with a unique state $s$. We rewrite the IRL problem as stated in proposition \ref{proposition:minmaxIRL} for that single-state problem as:
 
-\begin{observation}
-    (\textbf{Properties of the Rényi Entropy of order 2})
-    The gradient of the Rényi entropy of order $2$ ($H_2$) is simply given by:
-    \begin{align*}
-        \nabla_{\bm{p}_X} H_2(\bm{p}_X) 
-         = -2 \frac{ \bm{p}_X  }{\|\bm{p}_X \|_2^2}.
-    \end{align*}
-    And observing that, on the simplex $\Delta_n$ of dimensionality $n$ we have:
-    \begin{align*}
-        \|\nabla_{\bm{p}_X} H_2(\bm{p}_X)\| &= \Bigg\| -2 \frac{ \bm{p}_X  }{\|\bm{p}_X \|_2^2} \Bigg\| \\
-        &= 2 \frac{ 1 }{\|  \bm{p}_X  \|_2 } \leq 2 \sqrt{n}, ~ \bm{p}_X \in \Delta_n,
-    \end{align*}
-    it is clear that the Rényi entropy is $2\sqrt{n}$-Lipschitz. Furthermore, when computing the eigenvalues the Hessian of $H_2$, we get:
-    \begin{align*}
-        \lambda_{1,2} = \frac{\pm 2}{\|\bm{p}_X \|_2^2}
-    \end{align*}
-    which, on the $\Delta_n$ simplex, is clearly bounded by:
-    
-    
-    \begin{align*}
-        \lambda_{1,2} = \frac{\pm 2}{\|\bm{p}_X \|_2^2} \leq \pm 2 n.
-    \end{align*}
-    Which shows $H_2$ to also be $2n$-smooth.
-\end{observation}
+% \begin{equation}
+%     \label{eq:minmaxBanditIRL}
+%     \begin{aligned}
+%         \min_{\bm{r}\in\mathcal{R}}\max_{\bm{\pi}\in\Delta_{A}} \bm{r}^T(\bm{\pi}-\bm{\pi}^E)-\Omega(\bm{\pi}),
+%     \end{aligned}
+% \end{equation}
 
-\subsection{A first stab at proving convergence of IRL : the Unconstrained Inverse Bandit Problem} \label{sec:unconstrained_bandit_problem}
-Consider a MDP $\textit{M}$ with a unique state $s$. We rewrite the IRL problem as stated in proposition \ref{proposition:minmaxIRL} for that single-state problem as:
+% in order to more specifically define our problem let us pick a reward class $\mathcal{R}$ as well as a convex regularizer $\Omega:\Pi \rightarrow \mathbb{R}$. Specifically we choose our reward class to be the $L_1$ ball centered on the origin:
+% \begin{align*}
+%     \mathcal{R}_{L_1} := \lbrace \bm{r} \in \mathbb{R}^n ; \|r\|_1 \leq 1 \rbrace,
+% \end{align*}
+% and our regularizer $\Omega$ to be the negative Rényi Entropy with parameter $\alpha=2$:
+% \begin{align*}
+%     \Omega(\bm{\pi}) = -\beta H_{\alpha=2}(\bm{\pi})  &= -\frac{\beta}{1-\alpha} \log  \sum_{a \in A} \pi_a^\alpha,\\
+%     &= \beta \log  \sum_{a \in A} \pi_a^2,
+% \end{align*}
+% where $\beta>0$, which is a strictly-convex function w.r.t. $\pi$. Rewriting (\ref{eq:minmaxBanditIRL}) we get:
 
-\begin{equation}
-    \label{eq:minmaxBanditIRL}
-    \begin{aligned}
-        \min_{\bm{r}\in\mathcal{R}}\max_{\bm{\pi}\in\Delta_{A}} \bm{r}^T(\bm{\pi}-\bm{\pi}^E)-\Omega(\bm{\pi}),
-    \end{aligned}
-\end{equation}
+% \begin{equation}
+%     \label{eq:minmaxBanditIRLexplicit}
+%     \begin{aligned}
+%         \min_{\bm{r}\in\mathcal{R}_{L_1}}\max_{\bm{\pi}\in\Delta_{A}} \bm{r}^T(\bm{\pi}-\bm{\pi}^E) + \beta H_2(\bm{\pi}),
+%     \end{aligned}
+% \end{equation}
+% or equivalently:
+% \begin{align*}
+%     \begin{aligned}
+%         \min_{\bm{r}} \max_{\bm{\pi}} ~ & \bm{r}^T(\bm{\pi}-\bm{\pi}^E) + \beta H_2(\bm{\pi}), \\
+%         \text{s.t. }& \bm{1}^T \pi = 1, \\
+%          & \| \bm{r} \|_1 \leq 1.
+%     \end{aligned}
+% \end{align*}
+% For convenience, let us denote our objective function as $\text{obj}(\bm{r},\bm{\pi}) = \bm{r}^T(\bm{\pi}-\bm{\pi}^E) + \beta H_2(\bm{\pi})$. 
+% \begin{observation}
+%     \label{obs:properties_unconstrained_inverse_bandit}
+%     (\textbf{Properties of the unconstrained bandit problem}) Observe that:
+%     \begin{enumerate}
+%         \item The domain of the variable $\bm{\pi}$, $\Delta_A$ (the probability simplex on the discrete set $A$) is convex and compact.
+%         \item The domain of the variable $\bm{r}$, $\mathcal{R}_{L_1}$ (the L1 ball) is convex and compact.
+%         \item $\text{obj}$ is {linear} (and thus, non-strictly, convex) w.r.t the decision variable $\bm{r}$, it is also Lipschitz and smooth (has  Lipschitz Gradients) w.r.t. to both decision variables  $\bm{r}$ and $\bm{\pi}$ on their respective domains $\mathcal{R}_{L_1}$ and $\Delta_A$.
+%         \item $\text{obj}$ is concave w.r.t the decision variable $\bm{\pi}$ (since it has a linear term and Rényi's entropy is concave), it is also Lipschitz and smooth (the $\Omega$ function that we chose has $2\beta$-Lipschitz gradients) w.r.t. to both decision variables  $\bm{r}$ and $\bm{\pi}$ on their respective domains $\mathcal{R}_{L_1}$ and $\Delta_A$.
+%     \end{enumerate}
+% \end{observation}
 
-in order to more specifically define our problem let us pick a reward class $\mathcal{R}$ as well as a convex regularizer $\Omega:\Pi \rightarrow \mathbb{R}$. Specifically we choose our reward class to be the $L_1$ ball centered on the origin:
-\begin{align*}
-    \mathcal{R}_{L_1} := \lbrace \bm{r} \in \mathbb{R}^n ; \|r\|_1 \leq 1 \rbrace,
-\end{align*}
-and our regularizer $\Omega$ to be the negative Rényi Entropy with parameter $\alpha=2$:
-\begin{align*}
-    \Omega(\bm{\pi}) = -\beta H_{\alpha=2}(\bm{\pi})  &= -\frac{\beta}{1-\alpha} \log  \sum_{a \in A} \pi_a^\alpha,\\
-    &= \beta \log  \sum_{a \in A} \pi_a^2,
-\end{align*}
-where $\beta>0$, which is a strictly-convex function w.r.t. $\pi$. Rewriting (\ref{eq:minmaxBanditIRL}) we get:
+% \begin{proposition}
+%     (\textbf{Convergence of averaged-GDA on the Unconstrained Inverse Bandit Problem})
+%     Under the observations made in obs. \ref{obs:properties_unconstrained_inverse_bandit} and assuming \textit{direct access to the gradients} in $\bm{r}$ and in $\bm{\pi}$, directly applying projected gradient descent-ascent updates (as in \ref{alg:projGDA}) gives an algorithm for which, after $K$ steps, the duality gap of the averaged step $\bar{\bm{z}}=(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) $ is bounded by:
+%     \begin{align*}            
+%         \text{Duality Gap}(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) &=  \bm{r}^T(\bm{\pi}_K-\bm{\pi}^E) - \beta (H_2(\bm{\pi}_K) -  H_2(\bm{\pi}^E) ) \\ &\leq \max \Biggl(\frac{16 \beta\sqrt{n}}{\sqrt{K}},\frac{16 \sqrt{n} }{\sqrt{K}} \Biggr) = O(1/\sqrt{K}),
+%     \end{align*}
 
-\begin{equation}
-    \label{eq:minmaxBanditIRLexplicit}
-    \begin{aligned}
-        \min_{\bm{r}\in\mathcal{R}_{L_1}}\max_{\bm{\pi}\in\Delta_{A}} \bm{r}^T(\bm{\pi}-\bm{\pi}^E) + \beta H_2(\bm{\pi}),
-    \end{aligned}
-\end{equation}
-or equivalently:
-\begin{align*}
-    \begin{aligned}
-        \min_{\bm{r}} \max_{\bm{\pi}} ~ & \bm{r}^T(\bm{\pi}-\bm{\pi}^E) + \beta H_2(\bm{\pi}), \\
-        \text{s.t. }& \bm{1}^T \pi = 1, \\
-         & \| \bm{r} \|_1 \leq 1.
-    \end{aligned}
-\end{align*}
-For convenience, let us denote our objective function as $\text{obj}(\bm{r},\bm{\pi}) = \bm{r}^T(\bm{\pi}-\bm{\pi}^E) + \beta H_2(\bm{\pi})$. 
-\begin{observation}
-    \label{obs:properties_unconstrained_inverse_bandit}
-    (\textbf{Properties of the unconstrained bandit problem}) Observe that:
-    \begin{enumerate}
-        \item The domain of the variable $\bm{\pi}$, $\Delta_A$ (the probability simplex on the discrete set $A$) is convex and compact.
-        \item The domain of the variable $\bm{r}$, $\mathcal{R}_{L_1}$ (the L1 ball) is convex and compact.
-        \item $\text{obj}$ is {linear} (and thus, non-strictly, convex) w.r.t the decision variable $\bm{r}$, it is also Lipschitz and smooth (has  Lipschitz Gradients) w.r.t. to both decision variables  $\bm{r}$ and $\bm{\pi}$ on their respective domains $\mathcal{R}_{L_1}$ and $\Delta_A$.
-        \item $\text{obj}$ is concave w.r.t the decision variable $\bm{\pi}$ (since it has a linear term and Rényi's entropy is concave), it is also Lipschitz and smooth (the $\Omega$ function that we chose has $2\beta$-Lipschitz gradients) w.r.t. to both decision variables  $\bm{r}$ and $\bm{\pi}$ on their respective domains $\mathcal{R}_{L_1}$ and $\Delta_A$.
-    \end{enumerate}
-\end{observation}
+% \end{proposition}
+% \begin{proof}
+%     By direct computation. Observe that:
+%     \begin{enumerate}
+%         \item the max diameter of the constraint sets $\Delta_A$ and $\mathcal{R}_{L_1}$ is that of the $L_1$ ball, and that $\text{diam}(\mathcal{R}_{L_1}) = 2$,
+%         \item the function $-\beta H_2(\bm{\pi})$ has $2 \beta \sqrt{n}$-Lipschitz gradients w.r.t $\bm{\pi}$ and $2 \sqrt{n}$-Lipschitz gradients w.r.t $\bm{r}$.
+%     \end{enumerate}
+%     The results follows from the analysis of the projected GDA algorithm (see proposition \ref{prop:proj_gda_convex_concave}).
+% \end{proof}
 
-\begin{proposition}
-    (\textbf{Convergence of averaged-GDA on the Unconstrained Inverse Bandit Problem})
-    Under the observations made in obs. \ref{obs:properties_unconstrained_inverse_bandit} and assuming \textit{direct access to the gradients} in $\bm{r}$ and in $\bm{\pi}$, directly applying projected gradient descent-ascent updates (as in \ref{alg:projGDA}) gives an algorithm for which, after $K$ steps, the duality gap of the averaged step $\bar{\bm{z}}=(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) $ is bounded by:
-    \begin{align*}            
-        \text{Duality Gap}(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) &=  \bm{r}^T(\bm{\pi}_K-\bm{\pi}^E) - \beta (H_2(\bm{\pi}_K) -  H_2(\bm{\pi}^E) ) \\ &\leq \max \Biggl(\frac{16 \beta\sqrt{n}}{\sqrt{K}},\frac{16 \sqrt{n} }{\sqrt{K}} \Biggr) = O(1/\sqrt{K}),
-    \end{align*}
-
-\end{proposition}
-\begin{proof}
-    By direct computation. Observe that:
-    \begin{enumerate}
-        \item the max diameter of the constraint sets $\Delta_A$ and $\mathcal{R}_{L_1}$ is that of the $L_1$ ball, and that $\text{diam}(\mathcal{R}_{L_1}) = 2$,
-        \item the function $-\beta H_2(\bm{\pi})$ has $2 \beta \sqrt{n}$-Lipschitz gradients w.r.t $\bm{\pi}$ and $2 \sqrt{n}$-Lipschitz gradients w.r.t $\bm{r}$.
-    \end{enumerate}
-    The results follows from the analysis of the projected GDA algorithm (see proposition \ref{prop:proj_gda_convex_concave}).
-\end{proof}
-
-\begin{proposition}
-    (\textbf{Convergence of averaged-EG on the Unconstrained Inverse Bandit Problem})
-    Under the observations made in obs. \ref{obs:properties_unconstrained_inverse_bandit} and assuming \textit{direct access to the gradients} in $\bm{r}$ and in $\bm{\pi}$, directly applying projected expected gradient updates (as in \ref{alg:projEG}) gives an algorithm for which, after $K$ steps, the duality gap of the averaged step $\bar{\bm{z}}=(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) $ is bounded by:
-    \[ 
-        \text{Duality Gap}(\bar{\bm{z}}_K) \leq \frac{16 \sqrt{n}}{K} = O(1/{K}),
-    \]
-\end{proposition}
-\begin{proof}
-    By direct computation. Observe that:
-    \begin{enumerate}
-        \item the max diameter of the constraint sets $\Delta_A$ and $\mathcal{R}_{L_1}$ is that of the $L_1$ ball, and that $\text{diam}(\mathcal{R}_{L_1}) = 2$,
-        \item the function $-\beta H_2(\bm{\pi})$ is $2 \beta \sqrt{n}$-smooth.
-    \end{enumerate}
-    The results follows from the analysis of the projected EG algorithm (see proposition \ref{prop:proj_eg_smooth_convex_concave}).
-\end{proof}
+% \begin{proposition}
+%     (\textbf{Convergence of averaged-EG on the Unconstrained Inverse Bandit Problem})
+%     Under the observations made in obs. \ref{obs:properties_unconstrained_inverse_bandit} and assuming \textit{direct access to the gradients} in $\bm{r}$ and in $\bm{\pi}$, directly applying projected expected gradient updates (as in \ref{alg:projEG}) gives an algorithm for which, after $K$ steps, the duality gap of the averaged step $\bar{\bm{z}}=(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) $ is bounded by:
+%     \[ 
+%         \text{Duality Gap}(\bar{\bm{z}}_K) \leq \frac{16 \sqrt{n}}{K} = O(1/{K}),
+%     \]
+% \end{proposition}
+% \begin{proof}
+%     By direct computation. Observe that:
+%     \begin{enumerate}
+%         \item the max diameter of the constraint sets $\Delta_A$ and $\mathcal{R}_{L_1}$ is that of the $L_1$ ball, and that $\text{diam}(\mathcal{R}_{L_1}) = 2$,
+%         \item the function $-\beta H_2(\bm{\pi})$ is $2 \beta \sqrt{n}$-smooth.
+%     \end{enumerate}
+%     The results follows from the analysis of the projected EG algorithm (see proposition \ref{prop:proj_eg_smooth_convex_concave}).
+% \end{proof}
 
 
-\subsection{Introducing constraints into the bandit problem} \label{sec:constrained_bandit_problem}
+\subsection{Constrained Inverse bandit} \label{sec:constrained_bandit_problem}
 
-We now consider the \textit{unconstrained bandit problem}, which we define as:
+We consider the \textit{constrained inverse bandit problem}, which we define as:
 \begin{equation}
     \label{eq:minmaxConstrainedBanditIRL}
     \begin{aligned}
         \min_{\bm{r}\in\mathcal{R}}\max_{\bm{\pi}\in\mathcal{F}} \bm{r}^T(\bm{\pi}-\bm{\pi}^E)-\Omega(\bm{\pi}),
     \end{aligned}
 \end{equation}
-observe that this problem finds a saddle-point in the same objective function as the one considered in the unconstrained bandit problem discussed in section \ref{sec:unconstrained_bandit_problem}. The only difference is that the feasible set of acceptable policies is here given by:
+Where acceptable policies are defined in the feasible set of acceptable policies, which is here given by:
 \begin{align*}
     \mathcal{F} := \big\lbrace \bm{\pi} \in \Delta_A, \Psi \bm{\pi} \leq \bm{b} \big\rbrace,
 \end{align*}
@@ -163,12 +128,13 @@ where $\Psi$ is the cost matrix and $\bm{b}$ the constraint vector (see section 
 \begin{equation}
     \label{eq:dualConstrainedBanditIRL}
     \begin{aligned}
-        \min_{\bm{r}\in\mathcal{R},\bm{\zeta} \succcurlyeq 0}\max_{\bm{\pi}\in\Delta_{A}} \bm{r}^T(\bm{\pi}-\bm{\pi}^E)-\Omega(\bm{\pi}) + \bm{\zeta}^T (\bm{b}-\Psi \bm{\pi}).
+        \min_{\bm{r}\in\mathcal{R},\bm{\zeta} \succcurlyeq 0}\max_{\bm{\pi}\in\Delta_{A}} f(\bm{r},\bm{\zeta},\bm{\pi}).
     \end{aligned}
 \end{equation}
+where $f(\bm{r},\bm{\zeta},\bm{\pi}) = \bm{r}^T(\bm{\pi}-\bm{\pi}^E)-\Omega(\bm{\pi}) + \bm{\zeta}^T (\bm{b}-\Psi \bm{\pi})$ is our objective function.
 \begin{proposition}
     \label{prop:bandit_strong_duality}
-    (\textbf{Strong Duality}) Assuming that $\exists \bm{\pi}\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\zeta}^* \succcurlyeq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\zeta}^*$. 
+    (\textbf{Strong Duality}) Assuming that $\exists \bm{\pi}^E\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\zeta}^* \succcurlyeq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\zeta}^*$. 
 \end{proposition}
 \begin{proof}
     Using generic Lagrangian Duality theory, we make two observations:
@@ -179,21 +145,118 @@ where $\Psi$ is the cost matrix and $\bm{b}$ the constraint vector (see section 
     From Slater's condition it follows that strong duality holds.
 \end{proof}
 \noindent
-From proposition \ref{prop:bandit_strong_duality} we know that solving problem \ref{eq:dualConstrainedBanditIRL} is equivalent to solving \ref{eq:minmaxConstrainedBanditIRL}. We will thus study convergence of gradient-based saddle-point algorithms on \ref{eq:dualConstrainedBanditIRL}. Taking the same setup as in section \ref{sec:unconstrained_bandit_problem} ($\Omega(\bm{\pi}) = H_2(\bm{\pi})$, $\mathcal{R}=\mathcal{R}_{L_1})$, we can follow a very similar analysis.
+From proposition \ref{prop:bandit_strong_duality} we know that solving problem \ref{eq:dualConstrainedBanditIRL} is equivalent to solving \ref{eq:minmaxConstrainedBanditIRL}. We will study convergence of extra-gradient-based saddle-point algorithms on \ref{eq:dualConstrainedBanditIRL}. \\%Taking the same setup as in section \ref{sec:unconstrained_bandit_problem} ($\Omega(\bm{\pi}) = H_2(\bm{\pi})$, $\mathcal{R}=\mathcal{R}_{L_1})$, we can follow a very similar analysis. \\
 
-\begin{observation}
-    \label{obs:properties_constrained_inverse_bandit}
-    (\textbf{Properties of the constrained bandit problem}) Observe that:
-    \begin{enumerate}
-        \item The domain of the variable $\bm{\pi}$, $\Delta_A$ (the probability simplex on the discrete set $A$) is convex and compact.
-        \item The domain of the variable $\bm{r}$, $\mathcal{R}_{L_1}$ (the L1 ball) is convex and compact.
-        \item The domain of the variable $\bm{\zeta}$, $\bm{\zeta}\succcurlyeq 0$ (the positive orthant) is convex.
-        \item $\text{obj}$ is {linear} (and thus, non-strictly, convex) w.r.t the decision variables $\bm{r}$ and $\bm{\zeta}$, it is also Lipschitz and smooth (has  Lipschitz Gradients) w.r.t. to both decision variables  $\bm{r}$ and $\bm{\pi}$ on their respective domains $\mathcal{R}_{L_1}$, $\bm{\zeta}\succcurlyeq 0$ and $\Delta_A$.
-        \item $\text{obj}$ is concave w.r.t the decision variable $\bm{\pi}$ (since it has a linear term and Rényi's entropy is concave), it is also Lipschitz and smooth (the $\Omega$ function that we chose has $2\beta$-Lipschitz gradients) w.r.t. to both decision variables  $\bm{r}$ and $\bm{\pi}$ on their respective domains $\mathcal{R}_{L_1}$ and $\Delta_A$.
-    \end{enumerate}
-\end{observation}
+\subsubsection{Solving the Shannon Entropy regularized problem with an extra-gradient approach: EG-COP}
 
-The properties described in observation \ref{obs:properties_constrained_inverse_bandit}, give a natural motivation for a projected extra-gradient (or projected optimistic gradient) algorithm. We propose an extra-gradient approach in \textbf{EG-COP} (alg. \ref{alg:eg-cop}), which we further analyze.
+
+The most common regularizer used in practice for IRL is the Shannon entropy (see definition \ref{def:shannon}), the use of this particular regularizer poses some problems as it does not have Lipschitz gradients on the domain $\Delta_A$ (see discussion in section \ref{sec:shannon}). Therefore if we want to show convergence we have to use some trick to ensure gradients are indeed Lipschitz. To go around this limitation we suggest to project the gradients in the $\rho$-non-vanishing simplex $\Delta^{(\rho)}_A \subset \Delta_A$, on which we can show that our objective function is indeed Lipschitz. In order to more specifically define our problem let us pick a reward class $\mathcal{R}$: we choose our reward class $\mathcal{R}_{L_1}$ to be the $L_1$ ball centered on the origin, as it closely matches the analysis of identifiability made in \cite{Schlaginhaufen2023}. Note that reward class can be easily substituted for another convex reward class without changing the analysis very much. \\
+% \begin{align*}
+%     \mathcal{R}_{L_1} := \lbrace \bm{r} \in \mathbb{R}^n ; \|r\|_1 \leq 1 \rbrace,
+% \end{align*}
+% and our regularizer $\Omega$ to be the negative Rényi Entropy with parameter $\alpha=2$:
+% \begin{align*}
+%     \Omega(\bm{\pi}) = -\beta H_{\alpha=2}(\bm{\pi})  &= -\frac{\beta}{1-\alpha} \log  \sum_{a \in A} \pi_a^\alpha,\\
+%     &= \beta \log  \sum_{a \in A} \pi_a^2,
+% \end{align*}
+% where $\beta>0$, which is a strictly-convex function w.r.t. $\pi$. Rewriting (\ref{eq:minmaxBanditIRL}) we get:
+
+We thus consider the following problem:
+\begin{equation}
+    \label{eq:dualConstrainedBanditIRLShannon}
+    \begin{aligned}
+        \min_{\bm{r}\in\mathcal{R},\bm{\zeta} \succcurlyeq 0}\max_{\bm{\pi}\in\Delta_{A}^{(\rho)}} f_\text{EG-COP}(\bm{r},\bm{\zeta},\bm{\pi}).
+    \end{aligned}
+\end{equation}
+where $f_\text{EG-COP}(\bm{r},\bm{\zeta},\bm{\pi}) = \bm{r}^T(\bm{\pi}-\bm{\pi}^E)-H(\bm{\pi}) + \bm{\zeta}^T (\bm{b}-\Psi \bm{\pi})$ is our objective function (the dual Lagrangian of the problem \ref{eq:minmaxConstrainedBanditIRL}). For our result to hold, we need the following assumption:
+\begin{assumption}
+    \label{assumption:slater_with_margin_bandit}
+    (\textbf{Sufficient Slater's Condition}) we assume that $\exists \mathbf{m} > 0$ and $\pi = \Delta_A$ s.t.
+    \begin{align*}
+        \bm{b} - \Psi^T \bm{\pi} \succcurlyeq \mathbf{s}.
+    \end{align*}
+\end{assumption}
+\noindent
+In order to get a convergence result we need to show that, under our assumptions:
+\begin{enumerate}
+    \item $\pi^* \in \Delta_{A}^{(\rho)}$, i.e. the optimal policy lies in our restricted policy set,
+    \item $f_\text{EG-COP}$ is smooth over the domain $\Delta_{A}^{(\rho)}$,
+    \item the decision variables exist on a domain with a finite bounded diameter (specifically we need to show this for the Lagrange multipliers $\bm{\zeta}$ which are apparently unbounded in the original problem statement).
+\end{enumerate}
+
+First we tackle the first two points:
+
+\begin{proposition}
+    \label{prop:optimal_solution_in_simplex} The optimal policy $\bm{\pi}^*$ lies in the $\rho$-non-vanishing simplex $\Delta_A^{(\rho)}$ with parameter $\rho = \frac{1}{m} \exp \Bigl(\frac{-2(R+B)}{1-\gamma}\Bigr)$.
+\end{proposition}
+
+\begin{proof}
+    Recall that the optimal policy is given in terms of the optimal $Q$-values $Q^*$ by : 
+    \begin{align*}
+        \pi^*(a) = \frac{\exp(Q^*(a)/\beta)}{\sum_{a'\in A}\exp(Q^*(a')/\beta)}. \tag{A}
+    \end{align*}
+    We will start by bounding $Q^*$:
+    \begin{align*}
+        Q^*(a) &= r(a) + \gamma \mathbb{E}_{s \sim s_0} \Big[ V^*(s) \Big] = r(a) + V^*(s) \\
+        & = r(a) + \gamma  \max_{\bm{\pi}\in \Delta_A} \mathbb{E}_{s \sim s_0} \Big[ \sum_{t=0}^{+\infty} \gamma^t (r(a)+\beta H(\bm{\pi})) \Big].
+    \end{align*}
+    We now let $\alpha = \frac{R + \beta \log m}{1-\gamma}$ and claim that $-\alpha \leq Q(a) \leq \alpha$, this can be verified by:
+    \begin{align*}
+        Q^*(a) &\leq \max_{\bm{\pi}\in \Delta_A} \Bigg[ \sum_{t=0}^{+\infty} \gamma^t \bigl( r(a) + \beta H(\bm{\pi}) \bigr) \Bigg]\\
+        &\leq  \Big( \sum_{t=0}^{+\infty} \gamma^t \Big) \Big( R + \beta \log m \Big)\\
+        &= \frac{R + \beta \log m}{1-\gamma} = \alpha,\\
+        Q^*(a) &\geq \min_{\bm{\pi}\in \Delta_A} \Bigg[ \sum_{t=0}^{+\infty} \gamma^t \bigl( r(a) + \beta H(\bm{\pi}) \bigr) \Bigg]\\
+        &\geq  \Big( \sum_{t=0}^{+\infty} \gamma^t \Big) \Big( -R \Big) \geq  \Big( \sum_{t=0}^{+\infty} \gamma^t \Big) \Big( -R - \beta \log m \Big)\\
+        &= \frac{-R -\beta \log m}{1-\gamma} = -\alpha.
+    \end{align*}
+    Thus using $(A)$ we have that:
+    \begin{align*}
+        \pi^*(a) \geq \frac{\exp(-\alpha)}{\sum_a' \exp(\alpha)} 
+        = \frac{\exp -2 \alpha}{m} = \frac{1}{m} \exp \Big( -2 \alpha \frac{R +\beta \log m}{1-\gamma}  \Big).
+    \end{align*}
+    Which completes the proof (by definition of the the $\rho$-non-vanishing simplex).
+\end{proof}
+
+
+\begin{proposition}
+    \label{prop:f_eg_cop_smooth} $f_\text{EG-COP}$ is smooth with constant $L=m \exp \Big( 2 \frac{R +\beta \log m}{1-\gamma}  \Big)$.
+\end{proposition}
+
+\begin{proof}
+    We look at $\nabla^2 f_\text{EG-COP}$ the hessian of the objective function. Direct computation shows that it is a diagonal matrix of the form :
+    \begin{align*}
+        [\nabla^2 f(\bm{r},\bm{\zeta},\bm{\pi})]_{i,j} = \begin{cases}
+            \frac{1}{p_i} & \text{if } i=j\\
+            0 & \text{otherwise}.
+        \end{cases}
+    \end{align*}
+    The diagonal form of $\nabla^2 f(\bm{r},\bm
+    {\zeta},\bm{\pi})$ makes it trivial to bound it's spectral norm (the spectral norm is whatever element of the diagonal is maximize). It is thus just a matter of bounding $\frac{1}{p_i}$ which we can do using proposition \ref{prop:optimal_solution_in_simplex}:
+    \begin{align*}
+        \| \nabla^2 f \| \leq \max \text{eig} \Bigl( \nabla^2 f \Bigr) \leq m \exp \Big( 2 \alpha \frac{R +\beta \log m}{1-\gamma}  \Big).
+    \end{align*}
+\end{proof}
+
+Now we tackle showing that the diameter is bounded, since our reward class is a ball and since our policies are constrained to the $\rho$-non-vanishing simplex, this is only a matter of showing that the Lagrange multipliers $\bm{\zeta}$ are bounded to some box. Which is what we do in the next proposition.
+
+\begin{proposition}
+    \label{prop:bounded_zeta} Our Lagrange multiplier vector is contained in a box: $\bm{\zeta} \in \mathcal{B}$, where 
+    \[ \mathcal{B} := \Bigg\{ \bm{\zeta}\in\mathbb{R}^d : 0\leq[\bm{\zeta}]_i  \leq \frac{2(R +\beta \log m)}{\bm{m} (1-\gamma)} \forall i \Bigg\}.\]
+\end{proposition}
+
+\begin{proof}
+    Let $\bm{Z}_a(\bm{r}) := \{ \bm{\zeta} \succcurlyeq 0 : \max_{\bm{\pi}}f_\text{EG-COP}(\bm{r},\bm{\zeta},\bm{\pi}) \leq a \}$ be the sublevel set of the dual function $\max_{\bm{\pi}}f_\text{EG-COP}(\bm{r},\bm{\zeta},\bm{\pi})$ for any $a \in \mathbb{R}$, the for any $\bm{\zeta} \in \bm{Z}_a$, $\bm{r} \in \mathcal{R}$ we have:
+    \begin{align*}
+        a \succcurlyeq \max_{\bm{\pi}}f_\text{EG-COP}(\bm{r},\bm{\zeta},\bar{\bm{\pi}}) \succcurlyeq J( \bar{\bm{\pi}},\bm{r}) + \zeta^T (b - \Psi^T) \succcurlyeq \langle \bar{\bm{\pi}},\bm{r}\rangle + \bm{m} \zeta^T \mathbf{1}.
+    \end{align*}
+    From which we deduce $[\bm{\zeta}]_i \leq \frac{a-J( \bar{\bm{\pi}},\bm{r})}{\bm{m}}$, choosing $a=J(\bm{\pi}^*,\bm{r}^*)$ and using that $J(\bm{\pi},\bm{r}) \geq \frac{-R -\beta \log m}{1-\gamma}$ we get our result for the upper bound. For the lower bound we just use that $\bm{\zeta} \succcurlyeq 0$.
+\end{proof}
+
+At this point we are ready to describe the algorithm that we will use to solve the CIRL problem. It is simply a specific application of projected extra-gradient GDA (see alg. \ref{alg:projEG} in section \ref{sec:extra_grad}) to the objective function $f_\text{EG-COP}$ where we project on the domain $\mathcal{R}_{L_1}\times \mathcal{B} \times \Delta_A^{(\rho)}$. Theorem \ref{thm:EG_COP_convergence} proves that:
+\begin{enumerate}
+    \item the algorithm converges in finite time, with a $O(1/\epsilon)$ rate,
+    \item the algorithm recovers the exact solution (up to an error $\epsilon$) if the problem is identifiable.
+\end{enumerate}
 
 \begin{algorithm}
     \SetAlgoLined
@@ -203,30 +266,60 @@ The properties described in observation \ref{obs:properties_constrained_inverse_
       Set the learning rate $\eta >0$ \\
       Initialize the algorithm at some point $(\bm{x}_0,\bm{y}_0)$  \\
       \ForEach{iteration $k = 0,2,...,K-1$}{
-          $\bm{r}_{k+1/2} \leftarrow \Pi_{\mathcal{R}_{L_1}} \big(\bm{r}_k - \eta \nabla_{\bm{r}} \text{obj}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
-          $\bm{\zeta}_{k+1/2} \leftarrow \Pi_{\bm{\zeta} \succcurlyeq 0} \big(\bm{\zeta}_k - \eta \nabla_{\bm{\zeta}} \text{obj}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
-          $\bm{\pi}_{k+1/2} \leftarrow \Pi_{\Delta_a} \big(\bm{\pi}_k + \eta \nabla_{\bm{\pi}} \text{obj}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
-          $\bm{r}_{k+1} \leftarrow \Pi_{\mathcal{R}_{L_1}} \big(\bm{r}_k - \eta \nabla_{\bm{r}} \text{obj}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
-          $\bm{\zeta}_{k+1} \leftarrow \Pi_{\bm{\zeta} \succcurlyeq 0} \big(\bm{\zeta}_k - \eta \nabla_{\bm{\zeta}} \text{obj}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
-          $\bm{\pi}_{k+1} \leftarrow \Pi_{\Delta_a} \big(\bm{\pi}_k + \eta \nabla_{\bm{\pi}} \text{obj}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
+          $\bm{r}_{k+1/2} \leftarrow \Pi_{\mathcal{R}_{L_1}} \big(\bm{r}_k - \eta \nabla_{\bm{r}} f_\text{EG-COP}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+          $\bm{\zeta}_{k+1/2} \leftarrow \Pi_{\bm{\zeta} \in \mathcal{B}} \big(\bm{\zeta}_k - \eta \nabla_{\bm{\zeta}} f_\text{EG-COP}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+          $\bm{\pi}_{k+1/2} \leftarrow \Pi_{\Delta_A^{(\rho)}} \big(\bm{\pi}_k + \eta \nabla_{\bm{\pi}} f_\text{EG-COP}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+          $\bm{r}_{k+1} \leftarrow \Pi_{\mathcal{R}_{L_1}} \big(\bm{r}_k - \eta \nabla_{\bm{r}} f_\text{EG-COP}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
+          $\bm{\zeta}_{k+1} \leftarrow \Pi_{\bm{\zeta} \in \mathcal{B}} \big(\bm{\zeta}_k - \eta \nabla_{\bm{\zeta}} f_\text{EG-COP}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
+          $\bm{\pi}_{k+1} \leftarrow \Pi_{\Delta_A^{(\rho)}} \big(\bm{\pi}_k + \eta \nabla_{\bm{\pi}} f_\text{EG-COP}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
       }
-      return $(\bm{r}_K,\bm{\zeta}_K,\bm{\pi}_K)$
+      return $(\hat{\bm{r}}_K,\hat{\bm{\zeta}}_K,\hat{\bm{\pi}}_K)$, where $\hat{\cdot}$ denotes the empirical mean over a sequence.
   \end{algorithm}
-  
 
-\begin{proposition}
-    (\textbf{Convergence of averaged-EG on the Constrained Inverse Bandit Problem})
-    Under the observations made in obs. \ref{obs:properties_constrained_inverse_bandit} and assuming \textit{direct access to the gradients} in $\bm{r}$ and in $\bm{\pi}$, directly applying projected expected gradient updates (as in \ref{alg:projEG}) gives an algorithm for which, after $K$ steps, the duality gap of the averaged step $\bar{\bm{z}}=(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) $ is bounded by:
-    \[ 
-        \text{Duality Gap}(\bar{\bm{z}}_K) = O(1/{K}),
-    \]
-\end{proposition}
+
+  \begin{theorem}
+    \label{thm:EG_COP_convergence}
+    Algorithm \ref{alg:eg-cop} recovers the optimal reward and policy (up to reward shaping transformations), up to approximation error $\epsilon$ in time $O(1/K)$ (where $K$ is the number of iterations). More specifically, assuming we choose learning rate $\eta = \frac{1}{2m} \exp \Big( -2 \frac{R +\beta \log m}{1-\gamma}  \Big)$, we have: 
+    \begin{align*}
+        DG(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k) = \max_{\tilde{\bm{\pi}}} f_\text{EG-COP}(\hat{\bm{r}}_K,\hat{\bm{\zeta}}_K,\tilde{\bm{\pi}}) -
+        \min_{\tilde{\bm{r}},\tilde{\bm{\zeta}}} f_\text{EG-COP}(\tilde{\bm{r}}, \tilde{\bm{\zeta}},\hat{\bm{\pi}}_K) \\
+        \leq \frac{{2\sqrt{2} D m \exp \big(\frac{2(r+\beta \log m)}{1- \gamma})}}{K}.
+    \end{align*}
+    Where $D=\max\Big\{\sqrt{m},2R + \frac{2\sqrt{m}(R+ \beta \log m)}{\bm{m}(1-\gamma)} \Big\}$. Specifically if: $\sqrt{m}>2R + \frac{2\sqrt{m}(R+ \beta \log m)}{\bm{m}(1-\gamma)}$ then: 
+    \begin{align*}
+        DG(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k) 
+        \leq \frac{{ 2 m \sqrt{2m} \exp \big(\frac{2(r+\beta \log m)}{1- \gamma})}}{K},
+    \end{align*}
+    otherwise:
+    \begin{align*}
+        DG(\bm{r}_k, \bm{\zeta}_k,\bm{\pi}_k) 
+        \leq \frac{ 2 \sqrt{2} m \Big(2R + \frac{2\sqrt{m}(R+ \beta \log m)}{\bm{m}(1-\gamma)} \Big)  \exp \big(\frac{2(r+\beta \log m)}{1- \gamma})}{K}.
+    \end{align*}
+  \end{theorem}
 \begin{proof}
-    By direct computation. Observe that:
+    The proof follows the analysis of alg. \ref{alg:projEG}, which we do not re-state for brevity, so we just have to verify that the assumptions are satisfied:
     \begin{enumerate}
-        \item the max diameter cannot be bounded by the constraint set, but one can just pick $\|\bm{z}_0-\bm{z}^*\|$,
-        \item the constraints $\bm{r} \in \mathcal{R}_{L_1}$, $\bm{\pi} \in \Delta_A$ and $\bm{\zeta} \succcurlyeq 0$ are convex,
-        \item the function $-\beta H_2(\bm{\pi})$ is $2 \beta \sqrt{n}$-smooth.
+        \item we note that the function $f_\text{EG-COP}$ is concave-convex in $(\bm{r},\bm{\zeta},\bm{\pi})$ (where we just stack $\bm{r}$ and $\bm{\zeta}$ to have a saddle-point formulation),
+        \item we have that the domain on which the variables are defined is bounded by $D=\max\Big\{\sqrt{2},2R + \frac{2\sqrt{m}(R+ \beta \log m)}{\bm{m}(1-\gamma)} \Big\}$ (from the definitions of the reward class $\mathcal{R}_{L_1}$, the fact that the policy in in the non-vanishing simplex is contained in the simplex and thus has diameter $<\sqrt{m}$ and using the result of proposition \ref{prop:bandit_strong_duality} to get the diameter of $\mathcal{B})$,
+        \item we known that the function $f_\text{EG-COP}$ is smooth with parameter $m \exp \Big( 2 \alpha \frac{R +\beta \log m}{1-\gamma}  \Big)$ from proposition \label{prop:f_eg_cop_smooth}.
     \end{enumerate}
-    The results follows from the analysis of the projected EG algorithm (see proposition \ref{prop:proj_eg_smooth_convex_concave}).
+    Plugging those values into proposition $\ref{prop:proj_eg_smooth_convex_concave}$ gives us our convergence time. To verify that what is recovered is indeed correct we refer to proposition \ref{proposition:minmaxIRL} (which applies as the bandit case is simply a restriction of the generic IRL case). The choice of learning rate simply comes from the result of proposition \ref{prop:f_eg_cop_smooth} together with the required assumptions of proposition \ref{proposition:minmaxIRL}.
 \end{proof}
+
+
+% \begin{proposition}
+%     (\textbf{Convergence of averaged-EG on the Constrained Inverse Bandit Problem})
+%     Under the observations made in obs. \ref{obs:properties_constrained_inverse_bandit} and assuming \textit{direct access to the gradients} in $\bm{r}$ and in $\bm{\pi}$, directly applying projected expected gradient updates (as in \ref{alg:projEG}) gives an algorithm for which, after $K$ steps, the duality gap of the averaged step $\bar{\bm{z}}=(\bar{\bm{r}}_K,\bar{\bm{\pi}}_K) $ is bounded by:
+%     \[ 
+%         \text{Duality Gap}(\bar{\bm{z}}_K) = O(1/{K}),
+%     \]
+% \end{proposition}
+% \begin{proof}
+%     By direct computation. Observe that:
+%     \begin{enumerate}
+%         \item the max diameter cannot be bounded by the constraint set, but one can just pick $\|\bm{z}_0-\bm{z}^*\|$,
+%         \item the constraints $\bm{r} \in \mathcal{R}_{L_1}$, $\bm{\pi} \in \Delta_A$ and $\bm{\zeta} \succcurlyeq 0$ are convex,
+%         \item the function $-\beta H_2(\bm{\pi})$ is $2 \beta \sqrt{n}$-smooth.
+%     \end{enumerate}
+%     The results follows from the analysis of the projected EG algorithm (see proposition \ref{prop:proj_eg_smooth_convex_concave}).
+% \end{proof}

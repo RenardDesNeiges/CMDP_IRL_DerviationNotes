@@ -10,3 +10,5 @@
 *.toc
 settings.json
 
+notes.bbl
+.gitignore

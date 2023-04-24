@@ -139,8 +139,8 @@ Furthermore, when an state action pair $s,a$ has occupancy measure $\mu^\pi(s,a)
                 &= (1-\gamma)  \mathbb{E}\Bigg[ \sum_{s,a} \sum_{t=0}^{+\infty} \gamma^t  r(s,a) \textbf{1}(s,a) \Big| s_0 \sim \nu, \pi \Bigg] \\& -  (1-\gamma)  \mathbb{E}\Bigg[ \sum_{s} \sum_{t=0}^{+\infty} \gamma^t \Omega(\pi(\cdot|s))) \textbf{1}(s) \Big| s_0 \sim \nu, \pi \Bigg]   \\
                 &= \sum_{s,a} r(s,a)\overbrace{ (1-\gamma) \mathbb{E}\Bigg[  \sum_{t=0}^{+\infty}\gamma^t  \textbf{1}(s,a) \Big| s_0 \sim \nu, \pi \Bigg]}^{=\bm{\mu}^\pi(s,a)}\\
                 &- \sum_{s} \Omega(\pi(\cdot|s)) \overbrace{ (1-\gamma) \mathbb{E}\Bigg[  \sum_{t=0}^{+\infty} \gamma^t \textbf{1}(s) \Big| s_0 \sim \nu, \pi \Bigg]}^{=\bm{\mu}_S^\pi(s)}\\
-                &= \sum_{s,a} r(s,a) \bm{\mu}^\pi(s,a) - \sum_{s} \Omega(\pi(\cdot|s)) \bm{\mu}_S^\pi(s) \\
-                &=  \bm{r}^T \bm{\bm{\mu}^\pi} - f(\bm{\bm{\mu}}^\pi).
+                &= \sum_{s,a} r(s,a) \bm{\mu}^\pi(s,a) - \overbrace{\sum_{s} \Omega(\pi(\cdot|s)) \bm{\mu}_S^\pi(s) }^{:=\tilde{\Omega}(\bm{\mu})}\\
+                &=  \bm{r}^T \bm{\bm{\mu}^\pi} - \tilde{\Omega}(\bm{\bm{\mu}}^\pi).
     \end{align*}
     This is quite important as it shows that the objective function is \textbf{concave} w.r.t the occupancy measure (which opens the door for optimization approaches), moreover in the special case where $\Omega(\pi(\cdot|s)) = 0, ~\forall s \in S $ the objective is \textbf{linear} w.r.t the occupancy measure (which opens the door for linear programming approaches). \\
     For convenience we interchangeably write the objective as a function of the policy $\pi$ and of the occupancy measure $\bm{\mu}$:
@@ -179,15 +179,15 @@ The goal of an MDP can be stated as follows:
 i.e. find the policy that gives maximum expected discounted reward in the MDP $\textit{M}$ under initial state distribution $\nu$. Solving the problem \ref{eq:pb_direct_policy_opt} is known as \textit{direct policy optimization}. It is a \textbf{non-concave} optimization problem but we can find algorithms that converge globally on it. Alternatively because of observation \ref{obs:policy_occupancy_bijection} (policy-occupancy measure bijection), one can also formulate solving \ref{eq:pb_direct_policy_opt} in terms of the occupancy measure as follows:
 \begin{equation}
     \begin{aligned}
-        \max_{\bm{\mu}} & ~~ \bm{r}^T\bm{\bm{\mu}} - f(\bm{\mu})\\
+        \max_{\bm{\mu}} & ~~ \bm{r}^T\bm{\bm{\mu}} - \tilde{\Omega}(\bm{\mu})\\
         \text{s.t.} & ~~  (E-\gamma P)^T  \bm{\mu} = (1-\gamma) \bm{\nu},
     \end{aligned}
     \label{eq:pb_occupancy_opt}
 \end{equation}
-where the equality constraints $ (E-\gamma P)^T  \bm{\mu} = (1-\gamma) \bm{\nu}$ (the \textbf{Bellman Flow Constraints}) are equivalent to restricting $\bm{\mu}$ to the occupancy set $\mathcal{M}$ (see definition \ref{def:occupancy_set}). Note that as the problem (\ref{eq:pb_occupancy_opt}) has a concave cost-function with a set of linear equality constraints, it is a concave program. Observe that in the special case where $f(\bm{\mu})=0$ (\ref{eq:pb_occupancy_opt}) becomes a Linear Program that can be solved in poly-time. The problem (\ref{eq:pb_occupancy_opt}), naturally relaxes to a an associated, unconstrained Lagrangian form:
+where the equality constraints $ (E-\gamma P)^T  \bm{\mu} = (1-\gamma) \bm{\nu}$ (the \textbf{Bellman Flow Constraints}) are equivalent to restricting $\bm{\mu}$ to the occupancy set $\mathcal{M}$ (see definition \ref{def:occupancy_set}). Note that as the problem (\ref{eq:pb_occupancy_opt}) has a concave cost-function with a set of linear equality constraints, it is a concave program. Observe that in the special case where $\tilde{\Omega}(\bm{\mu})=0$ (\ref{eq:pb_occupancy_opt}) becomes a Linear Program that can be solved in poly-time. The problem (\ref{eq:pb_occupancy_opt}), naturally relaxes to a an associated, unconstrained Lagrangian form:
 
 \begin{equation}
-    \max_{\bm{\mu}} \min_{\bm{\lambda} \geq 0 }~~ \bm{r}^T\bm{\bm{\mu}} - f(\bm{\mu}) + \bm{\lambda}^T \big((E-\gamma P)^T  \bm{\mu} - (1-\gamma) \bm{\nu} \big),
+    \max_{\bm{\mu}} \min_{\bm{\lambda} \geq 0 }~~ \bm{r}^T\bm{\bm{\mu}} - \tilde{\Omega}(\bm{\mu}) + \bm{\lambda}^T \big((E-\gamma P)^T  \bm{\mu} - (1-\gamma) \bm{\nu} \big),
     \label{eq:pb_occupancy_lagrangian_opt}
 \end{equation}
-in which case the problem becomes a \textit{saddle-point problem}. In the unregularized form ($f(\bm{\mu})=0$) the problem is \textit{bilinear} w.r.t the lagrangian multiplier $\bm{\lambda}$ and the occupancy measure (primal variable) $\bm{\mu}$, else it is concave-linear.
+in which case the problem becomes a \textit{saddle-point problem}. In the unregularized form ($\tilde{\Omega}(\bm{\mu})=0$) the problem is \textit{bilinear} w.r.t the lagrangian multiplier $\bm{\lambda}$ and the occupancy measure (primal variable) $\bm{\mu}$, else it is concave-linear.
