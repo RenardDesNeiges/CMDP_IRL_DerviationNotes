@@ -16,7 +16,7 @@ First, we consider the most common measure of information (or "surpise"), the Sh
 \end{definition}
 
 \begin{observation}
-    (\textbf{Properties of the Shannon Entropy}) The Shannon entropy has the nice property of being a (strictly) concave function, but regardless, it poses several big problems for first-order optimization methods. One big problem is that $H$ is not defined when a probability in the distribution goes to $0$ (as $\log 0$ does not exist), as $\lim_{x \rightarrow 0} x \log x = 0$ we can for convenience re-define $H$ as : 
+    (\textbf{Properties of the Shannon Entropy}) The Shannon entropy has the nice property of being a (strictly) concave function, but regardless, it poses several problems for first-order optimization methods. One big problem is that $H$ is not defined when a probability in the distribution goes to $0$ (as $\log 0$ does not exist), as $\lim_{x \rightarrow 0} x \log x = 0$ we can for convenience re-define $H$ as : 
     \begin{align*}
         H(X) := \begin{cases}
             - \sum^n_{i=1}p_i \log(p_i) & \text{if } p_1 >0 \forall i \in [n], \\
@@ -25,18 +25,18 @@ First, we consider the most common measure of information (or "surpise"), the Sh
     \end{align*}
     This approach "plugs" the hole in the Shannon entropy but doesn't fix all of the problems associated with. Specifically, the gradient of $H$, which is expressed as:
     \[ [\nabla H (X)]_i = - \log p_i - 1, \]
-    is not Lipschitz, this is easily verifiable by observing that since $\lim_{x\rightarrow 0 a} \log(x) = -\infty$, when we pick a probability vector $\bm{p}$, s.t. for which some element $p_i \rightarrow 0$ we have that: $\| \nabla H (\bm{p})\| \rightarrow + \infty$. This makes $H$ violate an essential requirement for convergence of first-order optimization methods.
+    is neither Lipschitz nor bounded, this is easily verifiable by observing that since $\lim_{x\rightarrow 0 a} \log(x) = -\infty$, when we pick a probability vector $\bm{p}$, s.t. for which some element $p_i \rightarrow 0$ we have that: $\| \nabla H (\bm{p})\| \rightarrow + \infty$. This makes $H$ violate an essential requirement for convergence of first-order optimization methods.
     (The gradient does have the big advantage of being separable coordinate, by coordinate, which will prove useful later.)
 \end{observation}
 
-\subsubsection{Shannon Shenanigans: Lipschitzness of the Shannon Entropy over $\Delta^{(\rho)}_n$ and contractive flow over $\mathcal{B}^n_\rho$}
+\subsubsection{Shannon Shenanigans: Lipschitzness of the Shannon Entropy over $\Delta^{(\rho)}_n$}
 
 The following section is sort of a detour around the Shannon Entropy properties. The fact that $H$ is non Lipschitz when some probability in the distribution goes to $0$ motivates the study of the properties of $H$ on a restricted domain, for which we guarantee that no probability $p_i$ ever goes to close to $0$, for this reason we define the $\rho$-non-vanishing simplex of dimension $n$: $\Delta^{(\rho)}_n$.
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.6\textwidth]{figures/2-simplex.png}
-    \caption{An illustration of the $2$ dimensional $\rho$ non-vanishing simplex $\Delta^{(\rho)}_n$ (the orange inner-surface, on the plot). We have that $\Delta^{(\rho)}_n \subset \Delta^2$ (the non-vanishing simplex is a subset of the simplex) and we denote on the plot the area of the simplex $\Delta^2$ that is excluded by $\Delta^{(\rho)}_n$ (i.e. $\bar{\Delta}^2_\rho = \Delta^2 \setminus \Delta^{(\rho)}_n$) in blue. The plot also labels the corners $\bm{c}_i$ of the simplex, those $\bm{p}_{c,i}$ of the non-vanishing simplex, as well as the border $\mathcal{B}^2_\rho$ of $\Delta^{(\rho)}_n$ (the red line surrounding the orange area).}
+    \caption{An illustration of the $2$ dimensional $\rho$ non-vanishing simplex $\Delta^{(\rho)}_n$ (the orange inner-surface, on the plot). We have that $\Delta^{(\rho)}_n \subset \Delta^2$ (the non-vanishing simplex is a subset of the simplex) and we denote on the plot the area of the simplex $\Delta^2$ that is excluded by $\Delta^{(\rho)}_n$ (i.e. $\bar{\Delta}^2_\rho = \Delta^2 \setminus \Delta^{(\rho)}_n$) in blue. The plot also labels the corners $\bm{c}_i$ of the simplex, those $\bm{p}_{c,i}$ of the non-vanishing simplex, as well as the border $\delta_2^{(\rho)}$ of $\Delta^{(\rho)}_n$ (the red line surrounding the orange area).}
     \label{fig:2simple_nonvanishing}
 \end{figure}
 
@@ -57,9 +57,9 @@ The following section is sort of a detour around the Shannon Entropy properties.
             \rho & \text{otherwise.}\\
         \end{cases}
     \end{align*}
-    Which gives a hint of why we need to upper bound $\rho$ by $1/(n+1)$. We define the border $\mathcal{B}^n_\rho$ of $\Delta^{(\rho)}_n$ as the union of a set of $n+1$ subspaces ("edges") $\bm{E}^{(i)}$:
+    Which gives a hint of why we need to upper bound $\rho$ by $1/(n+1)$. We define the border $\delta_n^{(\rho)}$ of $\Delta^{(\rho)}_n$ as the union of a set of $n+1$ subspaces ("edges") $\bm{E}^{(i)}$:
     \begin{align*}
-        \mathcal{B}^n_\rho = \bigcup_{i\in [n+1]} \bm{E}^{(i)},
+        \delta_n^{(\rho)} = \bigcup_{i\in [n+1]} \bm{E}^{(i)},
     \end{align*}
     for which each edge $\bm{E}^{(i)}_\rho$ is defined as a convex combination over all the "corners" of $\Delta^{(\rho)}_n$, excluding the $p_{c,i}$ corner:
     \begin{align*}
@@ -81,42 +81,44 @@ The following section is sort of a detour around the Shannon Entropy properties.
 
 \begin{proposition}
     \label{prop:H_Lipschitz_over_K}
-    (\textbf{$H$ is $\log(\rho^{-1})$-Lipschitz over $\Delta^{(\rho)}_n$}). 
+    (\textbf{$H$ is $\sqrt{m}(\log(\rho^{-1}) -1 )$-Lipschitz over $\Delta^{(\rho)}_n$}). 
     
 \end{proposition}
 
 \begin{proof}
-    This proof is quite direct. Just observe that by definition of $\Delta^{(\rho)}_n$, which we restate below for clarity:
+    This proof is quite direct. We just bound the gradient norm by:
     \begin{align*}
-        \Delta^{(\rho)}_n := \Big\{ p \in \Delta \subset \mathbb{R}^n;~ [p]_i > \rho, ~ \forall i \in [n+1] \Big\},
+        \| \nabla H(p) \|_2 &= \sqrt{ [ \nabla H(p) ]_1^2 + [ \nabla H(p) ]_2^2 + [ \nabla H(p) ]_{n+1}^2 } \\
+        & \leq \sqrt{m} \sup_{\textbf{p} \in \Delta_n, ~ i\in [n+1]} |[ \nabla H(p) ]_{n+1}| \\
+        & = \sqrt{m} (-\log \rho - 1)
     \end{align*}
-    we have that, if $\bm{p} \in \Delta^{(\rho)}_n$: 
-    \begin{align*}
-        H(\bm{p}) = - \sum^{n+1}_{i=1}p_i \log(p_i)  \leq   \sum^{n+1}_{i=1}p_i \max_{i \in [n+1]} -\log(p_i) = - \log(\rho) 
-    \end{align*}
+    % \begin{align*}
+    %     \Delta^{(\rho)}_n := \Big\{ p \in \Delta \subset \mathbb{R}^n;~ [p]_i > \rho, ~ \forall i \in [n+1] \Big\},
+    % \end{align*}
+    % we have that, if $\bm{p} \in \Delta^{(\rho)}_n$: 
 \end{proof}
 
-Because of proposition \ref{prop:H_Lipschitz_over_K}, it would be nice to show that, under the right conditions, first-order methods ensure that steps of GD/GA/GDA stay bounded in some $\Delta^{(\rho)}_n$ for some $\rho>0$ and hence that the gradient is \textit{Lipschitz in practice} over the domain of admissible first-order steps. This is the motivation for lemma \ref{lemma:contractive_flow_of_H_over_B}.
+% Because of proposition \ref{prop:H_Lipschitz_over_K}, it would be nice to show that, under the right conditions, first-order methods ensure that steps of GD/GA/GDA stay bounded in some $\Delta^{(\rho)}_n$ for some $\rho>0$ and hence that the gradient is \textit{Lipschitz in practice} over the domain of admissible first-order steps. This is the motivation for lemma \ref{lemma:contractive_flow_of_H_over_B}.
 
 % \subsubsection{Contractive flow of Shannon's entropy over the non-vanishing simplex border, frustration against a useless bound}
     
 
-%     Let $H$ be Shannon's entropy and consider $\tilde{\bm{p}} \in \mathcal{B}^n_\rho$ (some element on the non-vanishing simplex border), for $0<\rho<1/(n+1)$ there exists $\beta>0$, s.t. we have:
+%     Let $H$ be Shannon's entropy and consider $\tilde{\bm{p}} \in \delta^n_\rho$ (some element on the non-vanishing simplex border), for $0<\rho<1/(n+1)$ there exists $\beta>0$, s.t. we have:
 %     \begin{align*}
-%         \Big\langle \nabla H(\tilde{\bm{p}}), \frac{\partial \mathcal{B}^n_\rho(\tilde{\bm{p}})}{\partial \rho} \Big\rangle \geq \beta,
+%         \Big\langle \nabla H(\tilde{\bm{p}}), \frac{\partial \delta^n_\rho(\tilde{\bm{p}})}{\partial \rho} \Big\rangle \geq \beta,
 %     \end{align*}
-%     where $\frac{\partial \mathcal{B}^n_\rho(\tilde{\bm{p}})}{\partial \rho}$ denotes the border-element differentiated w.r.t the non-vanishing parameter $\rho$. This statement can be read as "the flow of the gradient of $H$ flows in the same direction (or at least in some direction positively correlating with) the direction of a smaller box $\Delta^{n}_{\rho + d\rho}$". In other words our gradient flows inwards of $\Delta^{(\rho)}_n$, never outwards. See figure \ref{fig:K_border_flow} for a clearer picture.
+%     where $\frac{\partial \delta^n_\rho(\tilde{\bm{p}})}{\partial \rho}$ denotes the border-element differentiated w.r.t the non-vanishing parameter $\rho$. This statement can be read as "the flow of the gradient of $H$ flows in the same direction (or at least in some direction positively correlating with) the direction of a smaller box $\Delta^{n}_{\rho + d\rho}$". In other words our gradient flows inwards of $\Delta^{(\rho)}_n$, never outwards. See figure \ref{fig:K_border_flow} for a clearer picture.
 
 
 % \begin{figure}[h!]
 %     \centering
 %     \includegraphics[width=0.6\textwidth]{figures/flowNvSimplexBorder.png}
-%     \caption{Illustration in the $\Delta^{(\rho)}_n$ case of the partial derivative of the border w.r.t $\rho$ : $\frac{\partial \mathcal{B}^n_\rho(\tilde{\bm{p}})}{\partial \rho}$ (the red arrows), which is only defined on the border $\mathcal{B}^n_\rho$.}
+%     \caption{Illustration in the $\Delta^{(\rho)}_n$ case of the partial derivative of the border w.r.t $\rho$ : $\frac{\partial \delta^n_\rho(\tilde{\bm{p}})}{\partial \rho}$ (the red arrows), which is only defined on the border $\delta^n_\rho$.}
 %     \label{fig:K_border_flow}
 % \end{figure}
 
 
-%     We first need to explicitly compute two useful quantities: a generic element of the border $\mathcal{B}^n_\rho$, as well as the partial derivative of that element with respect to $\rho$. First, let's decompose our border $\mathcal{B}^n_\rho$ into it's individual edges, as shown in definition \ref{def:rho_non_vanishing_simplex}. Recall that we can write the full border as a union of "edges": $\mathcal{B}^n_\rho = \bigcup_{i\in [n+1]} \bm{E}^{(i)}$. Now let's observe that since the corner points are defined as:
+%     We first need to explicitly compute two useful quantities: a generic element of the border $\delta^n_\rho$, as well as the partial derivative of that element with respect to $\rho$. First, let's decompose our border $\delta^n_\rho$ into it's individual edges, as shown in definition \ref{def:rho_non_vanishing_simplex}. Recall that we can write the full border as a union of "edges": $\delta^n_\rho = \bigcup_{i\in [n+1]} \bm{E}^{(i)}$. Now let's observe that since the corner points are defined as:
 %     \begin{align*}
 %         [\bm{p}_{c,i}]_j \begin{cases}
 %             1-(n+1)\cdot \rho & \text{if } j=i,\\

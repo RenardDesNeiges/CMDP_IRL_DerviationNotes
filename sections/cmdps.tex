@@ -40,14 +40,14 @@ We define equivalent quantities (discounted cost, value, quality and objective) 
     (\textbf{Cost-Objective Function})
     For a given policy $\pi:S\rightarrow \Delta A$ and under an initial state distribution $\bm{\nu} \in \Delta_S$ we define the \textbf{cost-objective function} as:
     \begin{align*}
-        \bm{J}_\Psi^\nu(\pi) = \mathbb{E}\Big[  \bm{U}(\tau) \Big| s_0 \sim \nu, \pi \Big] =  \mathbb{E}\Big[ V_\Psi^\pi(s) \Big| s \sim \nu\Big].
+        \bm{K}(\pi) = \mathbb{E}\Big[  \bm{U}(\tau) \Big| s_0 \sim \nu, \pi \Big] =  \mathbb{E}\Big[ V_\Psi^\pi(s) \Big| s \sim \nu\Big].
     \end{align*}
 \end{definition}
 
 \begin{observation}
     As in the unconstrained MDP setting, one can rewrite the cost-objective as a function of the occupancy measure:
     \begin{align*}
-        \Psi^T \bm{\mu}^\pi = \bm{J}_\Psi^\nu(\pi).
+        \Psi^T \bm{\mu}^\pi = \bm{K}(\pi).
     \end{align*}
 \end{observation}
 
@@ -55,7 +55,7 @@ We define equivalent quantities (discounted cost, value, quality and objective) 
 
 The main difference between \textit{MDP}s and \textit{CMDP}s is that in a \textit{CMDP}, not all policies are admissible, in order to be feasible, a policy needs to meet the constraint:
 \begin{align*}
-    \bm{J}_\Psi^\nu(\pi) \leq \bm{b},
+    \bm{K}(\pi) \leq \bm{b},
 \end{align*}
 or equivalently
 \begin{align*}
@@ -74,7 +74,7 @@ This restricts the set of admissible policies and occupancy measures and allows 
 The goal of a CMDP can be stated as follows:
 \begin{align}
     \begin{aligned}
-    \max_{\pi \in \Pi} & ~ J^\nu(\pi), \\
+    \max_{\pi \in \Pi} & ~ J(\bm{\pi},\bm{r}), \\
     \text{s.t} & ~ \bm{J}_\Psi^\nu(\pi)\leq \bm{b},
     \end{aligned}
     \label{eq:pb_constrained_direct_policy_opt}
@@ -83,7 +83,7 @@ which in plain english reads as "\textit{find the policy that maximizes the expe
 
 \begin{equation}
     \begin{aligned}
-        \max_{\bm{\mu}} & ~~ \bm{r}^T\bm{\bm{\mu}}-f(\mu), \\
+        \max_{\bm{\mu}} & ~~ \bm{r}^T\bm{\bm{\mu}}-\tilde{\Omega}(\mu), \\
         \text{s.t.} & ~~  (E-\gamma P)^T  \bm{\mu} = (1-\gamma) \bm{\nu}, \\
                     & ~~  \Psi^T \bm{\mu} \leq \bm{b},
     \end{aligned}
@@ -100,7 +100,8 @@ We formulate the following solution maps are associated with the solutions of th
     (\textbf{Policy Solution Map})
     Given a CMDP $\textit{C}$ and it's reward $\bm{r}$, we define it's \textbf{policy solution map} as:
     \begin{align*}
-        \text{OPT}_{\pi}(\bm{r}) = \arg \max_{\pi\in \Pi}  J^\nu(\pi)
+        \text{CRL}_{\pi}(\bm{r}) = &\arg \max_{\pi\in \Pi}  J(\bm{\pi},\bm{r }) \\
+        \text{s.t.} & ~ \text{OM}(\pi) \in \mathcal{F}
     \end{align*}
 \end{definition}
 
@@ -109,9 +110,11 @@ We formulate the following solution maps are associated with the solutions of th
     (\textbf{Occupancy Solution Map})
     Given a CMDP $\textit{C}$ and it's reward $\bm{r}$, we define it's \textbf{occupancy solution map} as:
     \begin{align*}
-        \text{OPT}_{\mu}(\bm{r}) = \arg \max_{\mu\in \mathcal{F}}  J^\nu(\bm{\mu})
+        \text{CRL}_{\mu}(\bm{r}) = \arg \max_{\mu\in \mathcal{F}}  J(\bm{\mu},\bm{r})
     \end{align*}
 \end{definition}
+
+Note that we also use the notations $\text{RL}_{\pi/\mu} (\bm{r})$ for the unconstrained solution maps in occupancy and policy.
 
 \begin{observation}
     The solution maps from def \ref{def:policy_solmap} and from def \ref{def:occupancy_solmap}  are equivalent under the bijection from observation \ref{obs:policy_occupancy_bijection}, since by observation \ref{obs:mu_pi_objective} the optimized values are identical.

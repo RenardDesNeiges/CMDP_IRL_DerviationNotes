@@ -1,0 +1,164 @@
+
+\subsubsection{Solving the Shannon Entropy regularized problem with an extra-gradient approach: EG-COP}
+
+
+The most common regularizer used in practice for IRL is the Shannon entropy (see definition \ref{def:shannon}), the use of this particular regularizer poses some problems as it does not have Lipschitz gradients on the domain $\Delta_A$ (see discussion in section \ref{sec:shannon}). Therefore if we want to show convergence we have to use some trick to ensure gradients are indeed Lipschitz. To go around this limitation we suggest to project the gradients in the $\rho$-non-vanishing simplex $\Delta^{(\rho)}_A \subset \Delta_A$, on which we can show that our objective function is indeed Lipschitz. In order to more specifically define our problem let us pick a reward class $\mathcal{R}$: we choose our reward class $\mathcal{R}_{L_1}$ to be the $L_1$ ball centered on the origin, as it closely matches the analysis of identifiability made in \cite{Schlaginhaufen2023}. Note that reward class can be easily substituted for another convex reward class without changing the analysis very much. \\
+% \begin{align*}
+%     \mathcal{R}_{L_1} := \lbrace \bm{r} \in \mathbb{R}^n ; \|r\|_1 \leq 1 \rbrace,
+% \end{align*}
+% and our regularizer $\Omega$ to be the negative Rényi Entropy with parameter $\alpha=2$:
+% \begin{align*}
+%     \Omega(\bm{\pi}) = -\beta H_{\alpha=2}(\bm{\pi})  &= -\frac{\beta}{1-\alpha} \log  \sum_{a \in A} \pi_a^\alpha,\\
+%     &= \beta \log  \sum_{a \in A} \pi_a^2,
+% \end{align*}
+% where $\beta>0$, which is a strictly-convex function w.r.t. $\pi$. Rewriting (\ref{eq:minmaxBanditIRL}) we get:
+
+We thus consider the following problem:
+\begin{equation}
+    \label{eq:dualConstrainedBanditIRLShannon}
+    \begin{aligned}
+        \min_{\bm{r}\in\mathcal{R},\bm{\zeta} \geq 0}\max_{\bm{\pi}\in\Delta_{A}^{(\rho)}} f_\text{CIB-H}(\bm{r},\bm{\zeta},\bm{\pi}).
+    \end{aligned}
+\end{equation}
+where $f_\text{CIB-H}(\bm{r},\bm{\zeta},\bm{\pi}) = \langle \bm{r}, \bm{\pi}-\bm{\pi}^E\rangle - H(\bm{\pi}) + \langle \bm{\zeta}, \bm{b}-\Psi \bm{\pi} \rangle$ is our objective function (the dual Lagrangian of the problem \ref{eq:minmaxConstrainedBanditIRL}). For our result to hold, we need the following assumption:
+\begin{assumption}
+    \label{assumption:slater_with_margin_bandit}
+    (\textbf{Sufficient Slater's Condition}) we assume that $\exists \chi > 0$ and $\pi = \Delta_A$ s.t.
+    \begin{align*}
+        \bm{b} - \Psi^T \bm{\pi} \geq \chi.
+    \end{align*}
+\end{assumption}
+\noindent
+In order to get a convergence result we need to show that, under our assumptions:
+\begin{enumerate}
+    \item The decision variables exist on a domain with a finite bounded diameter (specifically we need to show this for the Lagrange multipliers $\bm{\zeta}$ which are apparently unbounded in the original problem statement).
+    \item $\pi^* \in \Delta_{A}^{(\rho)}$, i.e. the optimal policy lies in our restricted policy set,
+    \item $f_\text{CIB-H}$ is smooth over the domain $\Delta_{A}^{(\rho)}$,
+\end{enumerate}
+
+
+\begin{proposition}
+    \label{prop:bounded_zeta} Our Lagrange multiplier vector is contained in a box: $\bm{\zeta} \in \mathcal{B}$, where 
+    \[ \mathcal{B} := \Bigg\{ \bm{\zeta}\in\mathbb{R}^d : 0\leq[\bm{\zeta}]_i  \leq \frac{2(R +\beta \log m)}{\chi (1-\gamma)} \forall i \Bigg\}.\]
+\end{proposition}
+
+\begin{proof}
+    Let $\bm{Z}_a(\bm{r}) := \{ \bm{\zeta} \geq 0 : \max_{\bm{\pi}}f_\text{CIB-H}(\bm{r},\bm{\zeta},\bm{\pi}) \leq a \}$ be the sublevel set of the dual function $\max_{\bm{\pi}}f_\text{CIB-H}(\bm{r},\bm{\zeta},\bm{\pi})$ for any $a \in \mathbb{R}$, the for any $\bm{\zeta} \in \bm{Z}_a$, $\bm{r} \in \mathcal{R}$ we have:
+    \begin{align*}
+        a \geq \max_{\bm{\pi}}f_\text{CIB-H}(\bm{r},\bm{\zeta},\bar{\bm{\pi}}) \geq J( \bar{\bm{\pi}},\bm{r}) + \zeta^T (b - \Psi^T) \geq \langle \bar{\bm{\pi}},\bm{r}\rangle + \chi \zeta^T \mathbf{1}.
+    \end{align*}
+    From which we deduce $[\bm{\zeta}]_i \leq \frac{a-J( \bar{\bm{\pi}},\bm{r})}{\chi}$, choosing $a=J(\bm{\pi}^*,\bm{r}^*)$ and using that $J(\bm{\pi},\bm{r}) \geq \frac{-R -\beta \log m}{1-\gamma}$ we get our result for the upper bound. For the lower bound we just use that $\bm{\zeta} \geq 0$.
+\end{proof}
+
+
+
+\begin{proposition}
+    \label{prop:optimal_solution_in_simplex} The optimal policy $\bm{\pi}^*$ lies in the $\rho$-non-vanishing simplex $\Delta_A^{(\rho)}$ with parameter $\rho = \frac{1}{m} \exp \Big(\frac{-2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Big)$.
+\end{proposition}
+
+\begin{proof}
+    Recall that the optimal policy (for the unconstrained MDP) is given in terms of the optimal $Q$-values $Q^*$ by : 
+    \begin{align*}
+        \pi^*(a) = \frac{\exp(Q^*(a)/\beta)}{\sum_{a'\in A}\exp(Q^*(a')/\beta)}. \tag{A}
+    \end{align*}
+    Using from proposition \ref{prop:bandit_strong_duality} that $\text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\zeta}^*)$ we will use that result (on the modified reward function $\tilde{r}$) to compute our bound. We will start by bounding $Q^*$:
+    \begin{align*}
+        Q^*(a) &= \tilde{r}(a) + \gamma \mathbb{E}_{s \sim s_0} \Big[ \tilde{V}^*(s) \Big] 
+        = r(a) + [\bm{\Psi} \bm{\zeta}^*]_a + \tilde{V}^*(s) \\
+        & =  r(a) + [\bm{\Psi} \bm{\zeta}^*]_a  + \gamma  \max_{\bm{\pi}\in \Delta_A} \mathbb{E}_{s \sim s_0} \Big[ \sum_{t=0}^{+\infty} \gamma^t ( r(a) + [\bm{\Psi} \bm{\zeta}^*]_a +\beta H(\bm{\pi})) \Big].
+    \end{align*}
+    We now let $\alpha = \frac{R + \beta \log m}{1-\gamma}$ and claim that $-\alpha \leq Q(a) \leq \alpha$, this can be verified by:
+    \begin{align*}
+        Q^*(a) &\leq \max_{\bm{\pi}\in \Delta_A} \Bigg[ \sum_{t=0}^{+\infty} \gamma^t \bigl( r(a)+ [\bm{\Psi} \bm{\zeta}^*]_a + \beta H(\bm{\pi}) \bigr) \Bigg]\\
+        &\leq  \Big( \sum_{t=0}^{+\infty} \gamma^t \Big) \Big( R + \| \Psi \| \sup_{\bm{\zeta}^*} \|\bm{\zeta}^*\|_\infty + \beta \log m \Big)\\
+        &= \frac{\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}}
+        = \alpha,\\
+        Q^*(a) &\geq \min_{\bm{\pi}\in \Delta_A} \Bigg[ \sum_{t=0}^{+\infty} \gamma^t \bigl( r(a) + [\bm{\Psi} \bm{\zeta}^*]_a  + \beta H(\bm{\pi}) \bigr) \Bigg]\\
+        &\geq  \Big( \sum_{t=0}^{+\infty} \gamma^t \Big) \Big( -R \Big)
+        \\ &\geq  \Big( \sum_{t=0}^{+\infty} \gamma^t \Big) \Big( -R - \beta \log m \Big) \geq -\alpha.
+    \end{align*}
+    Thus using $(A)$ we have that:
+    \begin{align*}
+        \pi^*(a) \geq \frac{\exp(-\alpha)}{\sum_a' \exp(\alpha)} 
+        = \frac{\exp -2 \alpha}{m} 
+        = \frac{1}{m} \exp \Bigg(\frac{-2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Bigg).
+    \end{align*}
+    Which completes the proof (by definition of the the $\rho$-non-vanishing simplex).
+\end{proof}
+
+
+\begin{proposition}
+    \label{prop:f_eg_cop_smooth} $f_\text{CIB-H}$ is smooth with constant $L = m \exp \Big(\frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Big)$.
+\end{proposition}
+
+\begin{proof}
+    We look at $\nabla^2 f_\text{CIB-H}$ the hessian of the objective function. Direct computation shows that it is a diagonal matrix of the form :
+    \begin{align*}
+        [\nabla^2 f(\bm{r},\bm{\zeta},\bm{\pi})]_{i,j} = \begin{cases}
+            \frac{1}{p_i} & \text{if } i=j\\
+            0 & \text{otherwise}.
+        \end{cases}
+    \end{align*}
+    The diagonal form of $\nabla^2 f(\bm{r},\bm
+    {\zeta},\bm{\pi})$ makes it trivial to bound it's spectral norm (the spectral norm is whatever element of the diagonal is maximize). It is thus just a matter of bounding $\frac{1}{p_i}$ which we can do using proposition \ref{prop:optimal_solution_in_simplex}:
+    \begin{align*}
+        \| \nabla^2 f \| \leq \max \text{eig} \Bigl( \nabla^2 f \Bigr) \leq m \exp \Bigg(\frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Bigg).
+    \end{align*}
+\end{proof}
+
+Now we tackle showing that the diameter is bounded, since our reward class is a ball and since our policies are constrained to the $\rho$-non-vanishing simplex, this is only a matter of showing that the Lagrange multipliers $\bm{\zeta}$ are bounded to some box. Which is what we do in the next proposition.
+
+At this point we are ready to describe the algorithm that we will use to solve the CIRL problem. It is simply a specific application of projected extra-gradient GDA (see alg. \ref{alg:projEG} in section \ref{sec:extra_grad}) to the objective function $f_\text{CIB-H}$ where we project on the domain $\mathcal{R}_{L_1}\times \mathcal{B} \times \Delta_A^{(\rho)}$. Theorem \ref{thm:EG_COP_convergence} proves that:
+\begin{enumerate}
+    \item the algorithm converges in finite time, with a $O(1/\epsilon)$ rate,
+    \item the algorithm recovers the exact solution (up to an error $\epsilon$) if the problem is identifiable.
+\end{enumerate}
+
+\begin{algorithm}
+    \SetAlgoLined
+  \small
+    \caption{EG-COP: Extra-gradient constrained inverse bandit algorithm}
+    \label{alg:eg-cop}
+      Set the learning rate $\eta >0$ \\
+      Initialize the algorithm at some point $(\bm{r}_0,\bm{\zeta}_0,\bm{\pi}_0)$  \\
+      \ForEach{iteration $k = 0,2,...,K-1$}{
+          $\bm{r}_{k+1/2} \leftarrow \Pi_{\mathcal{R}_{L_1}} \big(\bm{r}_k - \eta \nabla_{\bm{r}} f_\text{CIB-H}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+          $\bm{\zeta}_{k+1/2} \leftarrow \Pi_{\bm{\zeta} \in \mathcal{B}} \big(\bm{\zeta}_k - \eta \nabla_{\bm{\zeta}} f_\text{CIB-H}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+          $\bm{\pi}_{k+1/2} \leftarrow \Pi_{\Delta_A^{(\rho)}} \big(\bm{\pi}_k + \eta \nabla_{\bm{\pi}} f_\text{CIB-H}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+          $\bm{r}_{k+1} \leftarrow \Pi_{\mathcal{R}_{L_1}} \big(\bm{r}_k - \eta \nabla_{\bm{r}} f_\text{CIB-H}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
+          $\bm{\zeta}_{k+1} \leftarrow \Pi_{\bm{\zeta} \in \mathcal{B}} \big(\bm{\zeta}_k - \eta \nabla_{\bm{\zeta}} f_\text{CIB-H}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
+          $\bm{\pi}_{k+1} \leftarrow \Pi_{\Delta_A^{(\rho)}} \big(\bm{\pi}_k + \eta \nabla_{\bm{\pi}} f_\text{CIB-H}(\bm{r}_{k+1/2},\bm{\zeta}_{k+1/2},\bm{\pi}_{k+1/2})\big)$ \\
+      }
+      return $(\hat{\bm{r}}_K,\hat{\bm{\zeta}}_K,\hat{\bm{\pi}}_K)$, where $\hat{\cdot}$ denotes the empirical mean over a sequence.
+  \end{algorithm}
+
+
+  \begin{theorem}
+    \label{thm:EG_COP_convergence}
+    Algorithm \ref{alg:eg-cop} recovers the optimal reward and policy (up to reward shaping transformations), up to approximation error $\epsilon$ in time $O(1/K)$ (where $K$ is the number of iterations). More specifically, assuming we choose learning rate $\eta = \frac{1}{2m}  \exp \Big(\frac{-2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Big)$, we have: 
+    \begin{align*}
+        DG(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k) 
+        \leq C_\text{EG-COP} \frac{1}{K},
+    \end{align*}
+    where:
+    \begin{align*}
+        C_\text{EG-COP} = 2 m D^2  \exp \Bigg(\frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Bigg).
+    \end{align*}
+    In which:
+    \begin{align*}
+        D = \max\Big\{
+            \sqrt{m},
+            2R 
+            +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} 
+            \Big\}.
+    \end{align*}
+  \end{theorem}
+\begin{proof}
+    The proof follows the analysis of alg. \ref{alg:projEG}, which we do not re-state for brevity, so we just have to verify that the assumptions are satisfied:
+    \begin{enumerate}
+        \item we note that the function $f_\text{CIB-H}$ is concave-convex in $(\bm{r},\bm{\zeta},\bm{\pi})$ (where we just stack $\bm{r}$ and $\bm{\zeta}$ to have a saddle-point formulation),
+        \item we have that the domain on which the variables are defined is bounded by $D= \max\Big\{\sqrt{m},2R +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} \Big\} $ (from the definitions of the reward class $\mathcal{R}_{L_1}$, the fact that the policy in in the non-vanishing simplex is contained in the simplex and thus has diameter $<\sqrt{m}$ and using the result of proposition \ref{prop:bandit_strong_duality} to get the diameter of $\mathcal{B})$,
+        \item we known that the function $f_\text{CIB-H}$ is smooth with parameter \[m  \exp \Big(\frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Big)\] from proposition \ref{prop:f_eg_cop_smooth}.
+    \end{enumerate}
+    Plugging those values into proposition $\ref{prop:proj_eg_smooth_convex_concave}$ gives us our convergence time. To verify that what is recovered is indeed correct we refer to proposition \ref{proposition:minmaxIRL} (which applies as the bandit case is simply a restriction of the generic IRL case). The choice of learning rate simply comes from the result of proposition \ref{prop:f_eg_cop_smooth} together with the required assumptions of proposition \ref{proposition:minmaxIRL}.
+\end{proof}

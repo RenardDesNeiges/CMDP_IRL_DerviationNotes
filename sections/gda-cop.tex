@@ -1,0 +1,72 @@
+\subsubsection{Solving the Shannon-regularized problem with gradient descent-ascent : GDA-COP}
+
+The very large constant in front of the EG-COP algorithm's rate motivates the search for alternative methods. The most straight-forward approach to that problem is to simply take average iterates of the GDA algorithm (using the same projections as in algorithm \ref{alg:eg-cop}). 
+
+\begin{algorithm}
+    \SetAlgoLined
+  \small
+    \caption{GDA-COP: Gradient-Descent Ascent constrained inverse bandit algorithm}
+    \label{alg:gda-cop}
+      Set the learning rate $\eta_k >0$ \\
+      Initialize the algorithm at some point $(\bm{r}_0,\bm{\zeta}_0,\bm{\pi}_0)$  \\
+      \ForEach{iteration $k = 0,2,...,K-1$}{
+            $\eta_k \rightarrow \xi \frac{1}{\sqrt{k}}$ \\
+            $\bm{r}_{k+1} \leftarrow \Pi_{\mathcal{R}_{L_1}} \big(\bm{r}_k - \eta_k \nabla_{\bm{r}} f_\text{CIB-H}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+            $\bm{\zeta}_{k+1} \leftarrow \Pi_{\bm{\zeta} \in \mathcal{B}} \big(\bm{\zeta}_k - \eta_k \nabla_{\bm{\zeta}} f_\text{CIB-H}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+            $\bm{\pi}_{k+1} \leftarrow \Pi_{\Delta_A^{(\rho)}} \big(\bm{\pi}_k + \eta_k \nabla_{\bm{\pi}} f_\text{CIB-H}(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k)\big)$ \\
+      }
+      return $(\hat{\bm{r}}_K,\hat{\bm{\zeta}}_K,\hat{\bm{\pi}}_K)$, where $\hat{\cdot}$ denotes the empirical mean over a sequence.
+  \end{algorithm}
+
+
+  \begin{theorem}
+    \label{thm:GDA_COP_convergence}
+    Algorithm \ref{alg:gda-cop} recovers the optimal reward and policy (up to reward shaping transformations), up to approximation error $\epsilon$ in time $O(1/\sqrt{K})$ (where $K$ is the number of iterations). More specifically, assuming we use the decreasing learning rate $\eta_k = \xi \frac{1}{\sqrt{k}}$, we have: 
+    \begin{align*}
+        DG(\bm{r}_k,\bm{\zeta}_k,\bm{\pi}_k) 
+        \leq C_\text{GDA-COP} \frac{1}{\sqrt{K}},
+    \end{align*}
+    where:
+    \begin{align*}
+        C_\text{GDA-COP} = 4 
+        \sqrt{m} 
+        D
+        \Bigl( \log m +
+        \frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} 
+        -1
+        \Bigr).
+    \end{align*}
+    In which: 
+    \begin{align*}
+        D = \max\Big\{
+            \sqrt{m},
+            2R 
+            +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} 
+            \Big\} ,
+    \end{align*}
+    is the domain diameter and:
+    \begin{align*}
+        \xi = \frac{D}{\sqrt{2m} 
+        \Bigl( \log m +
+        \frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} 
+        -1
+        \Bigr)}.
+    \end{align*}
+  \end{theorem}
+
+  \begin{proof}
+    The proof follows the analysis of alg. \ref{alg:projGDA}, which we do not re-state for brevity, so we just have to verify that the assumptions are satisfied:
+    \begin{enumerate}
+        \item we note that the function $f_\text{CIB-H}$ is concave-convex in $(\bm{r},\bm{\zeta},\bm{\pi})$ (where we just stack $\bm{r}$ and $\bm{\zeta}$ to have a saddle-point formulation),
+        \item we have that the domain on which the variables are defined is bounded by $D= \max\Big\{\sqrt{m},2R +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} \Big\} $ (from the definitions of the reward class $\mathcal{R}_{L_1}$, the fact that the policy in in the non-vanishing simplex is contained in the simplex and thus has diameter $<\sqrt{m}$ and using the result of proposition \ref{prop:bandit_strong_duality} to get the diameter of $\mathcal{B})$,
+        \item we known that the function $f_\text{CIB-H}$ is Lipschitz with parameter \[
+            \sqrt{m} 
+            \Bigl( \log m +
+            \frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} 
+            -1
+            \Bigr).    
+        \] from the Lipschitz gradient result of proposition \ref{prop:H_Lipschitz_over_K} and using the $\rho$ bound of proposition \ref{prop:optimal_solution_in_simplex}.
+    \end{enumerate}
+    Plugging those values into proposition $\ref{prop:proj_gda_convex_concave}$ gives us our convergence time. To verify that what is recovered is indeed correct we refer to proposition \ref{proposition:minmaxIRL} (which applies as the bandit case is simply a restriction of the generic IRL case). The choice of learning rate simply comes from the result of proposition \ref{prop:proj_gda_convex_concave} together with the required assumptions of proposition \ref{proposition:minmaxIRL}.
+\end{proof}
+

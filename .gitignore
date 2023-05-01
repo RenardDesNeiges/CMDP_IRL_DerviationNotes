@@ -9,6 +9,7 @@
 *.dict
 *.toc
 settings.json
-
 notes.bbl
+notes.blg
 .gitignore
+.DS_Store

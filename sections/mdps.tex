@@ -6,7 +6,7 @@
     \begin{align*}
         \textestimated{M} = (S,A,P,\bm{\nu},\bm{r},\gamma),
     \end{align*}
-    where $S = \{s_1,s_2,...,s_n\}$ is a discrete set of \textbf{states} of size $|S| = n$, $A = \{a_1,a_2,...,a_m\}$ a discrete set of \textbf{actions} of size $|A|=m$, is a probabilistic markovian transition law $P:S\times A \rightarrow \Delta_{S}$ that we can represent as a $\mathbb{R}^{nm\times n}$ matrix (where each column represents in the distribution $\in \Delta_S$), $\nu\in \Delta_s$ is the \textbf{initial distribution} of states at the start of the process, $r:S \times A\rightarrow \mathbb{R}$ is a reward function that we can conveniently represent as a vector $\bm{r}\in\mathbb{R}^{nm}$ since $S$ and $A$ are discrete, finally $\gamma\in(0,1)$ is our \textbf{discount factor}. \\
+    where $S = \{s_1,s_2,...,s_n\}$ is a discrete set of \textbf{states} of size $|S| = n$, $A = \{a_1,a_2,...,a_m\}$ a discrete set of \textbf{actions} of size $|A|=m$, is a probabilistic markovian transition law $P:S\times A \rightarrow \Delta_{S}$ that we can represent as a $\mathbb{R}^{nm\times n}$ matrix (where each column represents in the distribution $\in \Delta_S$), $\nu\in \Delta_s$ is the \textbf{initial distribution} of states at the start of the process, $r:S \times A\rightarrow \mathbb{R}$ is a reward function that we can conveniently represent as a vector $\bm{r}\in\mathcal{R}\subseteq\mathbb{R}^{nm}$ since $S$ and $A$ are discrete (we call $\mathcal{R}$ the \textbf{reward class}), finally $\gamma\in(0,1)$ is our \textbf{discount factor}. \\
 \end{definition}
 
 
@@ -32,13 +32,13 @@ The MDP, doesn't specify how actions are selected, in practice, this is done by 
     \end{align*}
 \end{definition}
 \noindent
-Under policy $\pi$ one can "\textit{close the loop}" and go from a \textit{MDP} to a \textit{markov chain}.
+Assuming actions are picked from some fixed policy function $\bm{\pi}\Pi$ the progression from state to state of the MDP becomes a Markov Chain described by the closed-loop transition law.
 
 \begin{definition}
     (\textbf{Closed-Loop Transition Law})
     We define the \textbf{closed-loop transition law} $P^\pi :S \rightarrow \Delta_S$ as a function that gives the distribution over the next state as a function of the current state, this distribution is trivially given by: 
     \begin{align*}
-        P(s'|s) = \sum_a P(s'|a,s) \cdot \pi(a|s).
+        P^\pi(s'|s) = \sum_a P(s'|a,s) \cdot \pi(a|s).
     \end{align*}
     \noindent
     It can be represented as a square matrix $P^\pi \in \mathbb{R}^{n \times n}$, where each $i$-th column gives the distribution of states $s'$ associated with the transition from the $i$-th state.
@@ -52,30 +52,30 @@ At each transition the agent receives reward $r_t = r(s_t,a_t)$. We want to quan
     (\textbf{Discounted Reward})
     Given a policy $\pi$, and a convex \textbf{policy regularizer function} $\Omega: \Pi \rightarrow \mathbb{R}$, one can compute the \textit{discounted reward} $R(\tau)$ as follows:
     \begin{align*}
-        R^{\Omega(\pi)}(\tau) = (1-\gamma) \lim_{T \rightarrow + \infty}\sum_{t=0}^{T} \gamma^t \Bigl( r(s_t,a_t) - \Omega(\pi(\cdot|s_t)) \Bigr) ;~ s_t,a_t \in \tau.
+        R(\tau) = (1-\gamma) \lim_{T \rightarrow + \infty}\sum_{t=0}^{T} \gamma^t \Bigl( r(s_t,a_t) - \Omega(\pi(\cdot|s_t)) \Bigr) ;~ s_t,a_t \in \tau.
     \end{align*}
     Note that assuming that the regularized rewards ($r(s_t,a_t)- \Omega(\pi(\cdot|s_t))$) are upper-bounded by some constant $C\in \mathbb{R}$, this limit is guaranteed to exist as:
     \begin{align*}
-        R(\tau) = (1-\gamma) \lim_{T \rightarrow + \infty}\sum_{t=0}^{T} \gamma^t (r(s_t,a_t)- \Omega(\pi(\cdot|s_t))) \leq (1-\gamma) \lim_{T \rightarrow + \infty}\sum_{t=0}^{T} \gamma^t C = C.
+        R(\tau) = (1-\gamma) \lim_{T \rightarrow + \infty}\sum_{t=0}^{T} \gamma^t \Big(r(s_t,a_t)- \Omega(\pi(\cdot|s_t))\Big) \leq (1-\gamma) \lim_{T \rightarrow + \infty}\sum_{t=0}^{T} \gamma^t C = C.
     \end{align*}
 \end{definition}
 \noindent
-Since the process is stochastic it makes more sense to think in terms of \textit{expected discounted reward}, we define the \textit{objective function} $J^\pi$, the \textit{value function} $V^\pi(s)$ and the \textit{quality function} $Q^\pi(s,a)$ (which are all associated with a policy $\pi$).
+Since the process is stochastic it makes more sense to think in terms of \textit{expected discounted reward}, we define the \textit{objective function} $J(\bm{\pi},\bm{r})$, the \textit{value function} $V^\pi_r(s)$ and the \textit{quality function} $Q^\pi_r(s,a)$ (which are all associated with a policy $\pi$ and a reward function $r$).
 
 \begin{definition}
     (\textbf{Value Function})
-    For a given policy $\pi:S\rightarrow \Delta A$, a convex \textbf{policy regularizer function} $\Omega: \Pi \rightarrow \mathbb{R}$ and under the assumption that the agent starts at some state $s_0$, we define the \textbf{value function} $V^\pi:S\rightarrow \mathbb{R}$ as:
+    For a given policy $\pi:S\rightarrow \Delta A$, a convex \textbf{policy regularizer function} $\Omega: \Pi \rightarrow \mathbb{R}$ and under the assumption that the agent starts at some state $s$, we define the \textbf{value function} $V^\pi_r:S\rightarrow \mathbb{R}$ as:
     \begin{align*}
-        V^\pi(s) &= \mathbb{E}\Big[ R(\tau) \Big| s_0  = s, \pi \Big] \\
+        V_r^\pi(s) &= \mathbb{E}\Big[ R(\tau) \Big| s_0  = s, \pi \Big] \\
          &= \mathbb{E}\Bigg[ (1-\gamma) \sum_{t=0}^{+\infty} \gamma^t \Bigl(  r(s_t,a_t) - \Omega(\pi(\cdot|s_t))  \Bigr) \Big| s_0  = s, \pi \Bigg].
     \end{align*}
 \end{definition}
 
 \begin{definition}
     (\textbf{Quality Function})
-    For a given policy $\pi:S\rightarrow \Delta A$, a convex \textbf{policy regularizer function} $\Omega: \Pi \rightarrow \mathbb{R}$ and under the assumption that the agent starts at some state $s_0$ with first action $a_0$, we define the \textbf{quality function} $Q^\pi:S\times A \rightarrow \mathbb{R}$ as:
+    For a given policy $\pi:S\rightarrow \Delta A$, a convex \textbf{policy regularizer function} $\Omega: \Pi \rightarrow \mathbb{R}$ and under the assumption that the agent starts at some state $s$ with some first action $a$, we define the \textbf{quality function} $Q_r^\pi:S\times A \rightarrow \mathbb{R}$ as:
     \begin{align*}
-        Q^\pi(s,a) &= \mathbb{E}\Big[ R(\tau) \Big| s_0  = s, a_0  = a, \pi \Big] \\
+        Q_r^\pi(s,a) &= \mathbb{E}\Big[ R(\tau) \Big| s_0  = s, a_0  = a, \pi \Big] \\
         \\ &= \mathbb{E}\Bigg[ (1-\gamma) \sum_{t=0}^{+\infty} \gamma^t \Bigl( r(s_t,a_t) - \Omega(\pi(\cdot|s_t))  \Bigr)  \Big| s_0  = s, a_0 = a, \pi \Bigg].
     \end{align*}
 \end{definition}
@@ -84,9 +84,9 @@ Since the process is stochastic it makes more sense to think in terms of \textit
     (\textbf{Objective Function})
     For a given policy $\pi:S\rightarrow \Delta A$, convex policy regularizer function $\Omega: \Pi \rightarrow \mathbb{R}$ and and under an initial state distribution $\bm{\nu} \in \Delta_S$ we define the \textbf{objective function} as:
     \begin{align*}
-        J^\nu(\pi) = \mathbb{E}\Big[ R(\tau) \Big| s_0 \sim \nu, \pi \Big] =  \mathbb{E}\Big[ V^\pi(s) \Big| s \sim \nu\Big].
+        J(\pi,r) = \mathbb{E}\Big[ R(\tau) \Big| s_0 \sim \nu, \pi \Big] =  \mathbb{E}\Big[ V^\pi(s) \Big| s \sim \nu\Big].
     \end{align*}
-    Since we most often use the \textbf{objective function} for optimization in policy space, we consider that $J^\nu:\pi \rightarrow \mathbb{R}$ is a function of the policy $\pi$.
+    Since we most often use the \textbf{objective function} for optimization in policy space, we consider that $J:\Pi \times \mathcal{R} \rightarrow \mathbb{R}$ is a function of the policy $\pi$ and the reward $r$.
 \end{definition}
 
 \subsubsection{The Occupancy Measure}
@@ -101,7 +101,7 @@ We now discuss a descriptor of the distribution of an agent's position across al
         \\
         &= (1-\gamma) \mathbb{E} \Big[ \sum_{t=0}^{+\infty} \gamma^t \mathbf{1}(s_t=s,a_t=a) \Big| s_0 \sim \nu, \pi\Big],
     \end{align*}
-    since our state and action spaces are discrete we can represent $\bm{\mu}$ as a vector in $\mathbb{R}^{nm}$. 
+    since our state and action spaces are discrete we can represent $\bm{\mu}^{\pi}$ as a vector in $\mathbb{R}^{nm}$. 
 \end{definition}
 
 \begin{definition}
@@ -124,13 +124,13 @@ We now discuss a descriptor of the distribution of an agent's position across al
     since our state and action spaces are discrete we can represent $\bm{\mu}_S$ as a vector in $\mathbb{R}^{n}$.
 \end{definition}
 \noindent
-Furthermore, when an state action pair $s,a$ has occupancy measure $\mu^\pi(s,a)=0$ (under policy $\pi$), we say that it is \textit{unvisited}.
+Furthermore, when an state action pair $s,a$ has occupancy measure $\mu^\pi(s,a)=0$ (under policy $\pi$), we say that it is \textit{unvisited}. 
 
 \begin{observation}
     \label{obs:mu_pi_objective}
     The occupancy measure provides us with a very concise notation for writing out quantities such as the \textbf{objective function}, which can be represented in a simple scalar product form:
     \begin{align*}
-        J^\nu(\pi) = \bm{r}^T \bm{\mu}^\pi - f(\bm{\mu}^\pi).
+        J(\bm{\pi},\bm{r}) = \langle \bm{r}, \bm{\mu}^\pi \rangle - \tilde{\Omega}(\bm{\mu}^\pi).
     \end{align*}
     Which can be easily verified as follows:
     \begin{align*}
@@ -142,12 +142,22 @@ Furthermore, when an state action pair $s,a$ has occupancy measure $\mu^\pi(s,a)
                 &= \sum_{s,a} r(s,a) \bm{\mu}^\pi(s,a) - \overbrace{\sum_{s} \Omega(\pi(\cdot|s)) \bm{\mu}_S^\pi(s) }^{:=\tilde{\Omega}(\bm{\mu})}\\
                 &=  \bm{r}^T \bm{\bm{\mu}^\pi} - \tilde{\Omega}(\bm{\bm{\mu}}^\pi).
     \end{align*}
-    This is quite important as it shows that the objective function is \textbf{concave} w.r.t the occupancy measure (which opens the door for optimization approaches), moreover in the special case where $\Omega(\pi(\cdot|s)) = 0, ~\forall s \in S $ the objective is \textbf{linear} w.r.t the occupancy measure (which opens the door for linear programming approaches). \\
-    For convenience we interchangeably write the objective as a function of the policy $\pi$ and of the occupancy measure $\bm{\mu}$:
-    \begin{align*}
-        J^\nu(\pi) =  J^\nu(\bm{\mu}).
-    \end{align*}
 \end{observation}
+
+\begin{lemma}
+    \label{lem:convex_reg_in_om} (\textbf{Expected-Regularizer is convex in $\mu$}) Consider the function $\tilde{\Omega}:=\mathbb{E}_{s \sim \bm{\mu}}[\Omega(\pi(\cdot|s))]$,
+    \begin{itemize}
+        \item if $\Omega$ is \textbf{convex}, then so is $\tilde{\Omega}$
+        \item if $\Omega$ is \textbf{strictly-convex}, then so is $\tilde{\Omega}$.
+    \end{itemize}
+    (Proof in \cite{Schlaginhaufen2023}.)
+\end{lemma}
+
+Observation \ref{obs:mu_pi_objective}, together with lemma \ref{lem:convex_reg_in_om} is quite important as it shows that the objective function is \textbf{concave} w.r.t the occupancy measure (which opens the door for optimization approaches), moreover in the special case where $\Omega(\pi(\cdot|s)) = 0, ~\forall s \in S $ the objective is \textbf{linear} w.r.t the occupancy measure (which opens the door for linear programming approaches). \\
+For convenience we interchangeably write the objective as a function of the policy $\pi$ and of the occupancy measure $\bm{\mu}$:
+\begin{align*}
+    J^\nu(\pi) =  J^\nu(\bm{\mu}).
+\end{align*} \\
 
 \begin{observation}
     \label{obs:policy_occupancy_bijection}
@@ -156,7 +166,7 @@ Furthermore, when an state action pair $s,a$ has occupancy measure $\mu^\pi(s,a)
         \item compute the \textbf{closed loop transition law} $P^\pi$,
         \item compute the \textbf{state-occupancy measure} from the occupancy measure, this is easy as it has a matrix-geometric series form:
         \[  \mu^\pi_S = (1-\gamma) \lim_{T \rightarrow + \infty} \sum_{t=0}^T  (\gamma P^\pi)^t = (1-\gamma) (I - \gamma P^\pi)^{-1} \]
-        \item finally one can compute the \textbf{occupancy measure} through
+        \item finally one can compute the \textbf{occupancy measure} by
         \[ \mu(s,a) = \pi(a|s)\mu_S(s).\]
     \end{enumerate}
     Similarly, with knowledge of the occupancy mapping $\bm{\mu}$ one can recover a policy $\pi$ as follows:
@@ -169,17 +179,33 @@ Furthermore, when an state action pair $s,a$ has occupancy measure $\mu^\pi(s,a)
     Notice that the mapping is ill-defined for unvisited states, but this does not matter changes in policy on unvisited states have no impact on the discounted reward.
 \end{observation}
 
-\subsubsection{Formulating the search of optimal policies as optimization problems} \label{sec:opt_sol_mdp}
+For convenience we define two maps that allow us to go from occupancy map to policies and from policies to occupancy maps.
+
+\begin{definition}
+    The $\text{OM}:\Pi \rightarrow \mathcal{M}$ returns the occupancy measure $\bm{\mu}=\text{OM}(\bm{\pi})$ associated with a given policy $\bm{\pi}$.
+\end{definition}
+\begin{definition}
+    The $\text{PO}: \mathcal{M} \rightarrow \Pi$ returns a policy $\bm{\pi}=\text{PO}(\bm{\mu})$ that induces the occupancy measure $\bm{\mu}$.
+\end{definition}
+
+We expect that the policy for unvisited state is always uniform ($\pi(a|s_\text{univisted})=1/m~\forall a \in A$), the following property is satisfied
+\begin{align*}
+    (\text{OM} \circ \text{PO}) = \text{Id}\\
+    (\text{PO} \circ \text{OM}) = \text{Id}\\
+\end{align*}
+where $\text{Id}$ is the identity operator.
+
+\subsubsection{Formulating solving MDPs as optimization problems} \label{sec:opt_sol_mdp}
 
 The goal of an MDP can be stated as follows:
 \begin{align}
-    \max_{\pi \in \Pi} J^\nu(\pi),
+    \max_{\bm{\pi} \in \Pi} &J(\bm{\pi},\bm{r})
     \label{eq:pb_direct_policy_opt}
 \end{align}
-i.e. find the policy that gives maximum expected discounted reward in the MDP $\textit{M}$ under initial state distribution $\nu$. Solving the problem \ref{eq:pb_direct_policy_opt} is known as \textit{direct policy optimization}. It is a \textbf{non-concave} optimization problem but we can find algorithms that converge globally on it. Alternatively because of observation \ref{obs:policy_occupancy_bijection} (policy-occupancy measure bijection), one can also formulate solving \ref{eq:pb_direct_policy_opt} in terms of the occupancy measure as follows:
+i.e. find the policy that gives maximum expected discounted reward in the MDP $\textit{M}$ under initial state distribution $\nu$. Solving the problem \ref{eq:pb_direct_policy_opt} is known as \textit{direct policy optimization}. It is a \textbf{non-concave} optimization problem but we can find algorithms that converge globally on it \cite{Agarwal2020}. Alternatively because of observation \ref{obs:policy_occupancy_bijection} (policy-occupancy measure bijection), one can also formulate solving \ref{eq:pb_direct_policy_opt} in terms of the occupancy measure as follows:
 \begin{equation}
     \begin{aligned}
-        \max_{\bm{\mu}} & ~~ \bm{r}^T\bm{\bm{\mu}} - \tilde{\Omega}(\bm{\mu})\\
+        \max_{\bm{\mu}} & ~~ \langle \bm{r}, \bm{\bm{\mu}} \rangle - \tilde{\Omega}(\bm{\mu})\\
         \text{s.t.} & ~~  (E-\gamma P)^T  \bm{\mu} = (1-\gamma) \bm{\nu},
     \end{aligned}
     \label{eq:pb_occupancy_opt}
@@ -187,7 +213,10 @@ i.e. find the policy that gives maximum expected discounted reward in the MDP $\
 where the equality constraints $ (E-\gamma P)^T  \bm{\mu} = (1-\gamma) \bm{\nu}$ (the \textbf{Bellman Flow Constraints}) are equivalent to restricting $\bm{\mu}$ to the occupancy set $\mathcal{M}$ (see definition \ref{def:occupancy_set}). Note that as the problem (\ref{eq:pb_occupancy_opt}) has a concave cost-function with a set of linear equality constraints, it is a concave program. Observe that in the special case where $\tilde{\Omega}(\bm{\mu})=0$ (\ref{eq:pb_occupancy_opt}) becomes a Linear Program that can be solved in poly-time. The problem (\ref{eq:pb_occupancy_opt}), naturally relaxes to a an associated, unconstrained Lagrangian form:
 
 \begin{equation}
-    \max_{\bm{\mu}} \min_{\bm{\lambda} \geq 0 }~~ \bm{r}^T\bm{\bm{\mu}} - \tilde{\Omega}(\bm{\mu}) + \bm{\lambda}^T \big((E-\gamma P)^T  \bm{\mu} - (1-\gamma) \bm{\nu} \big),
+    \max_{\bm{\mu}} \min_{\bm{\lambda} \geq 0 }~~ 
+    \langle \bm{r}, \bm{\bm{\mu}} \rangle
+    - \tilde{\Omega}(\bm{\mu}) 
+    + \langle \bm{\lambda}, \big((E-\gamma P)^T  \bm{\mu} - (1-\gamma) \bm{\nu} \big)\rangle,
     \label{eq:pb_occupancy_lagrangian_opt}
 \end{equation}
-in which case the problem becomes a \textit{saddle-point problem}. In the unregularized form ($\tilde{\Omega}(\bm{\mu})=0$) the problem is \textit{bilinear} w.r.t the lagrangian multiplier $\bm{\lambda}$ and the occupancy measure (primal variable) $\bm{\mu}$, else it is concave-linear.
+in which case the problem becomes a \textit{saddle-point problem}. In the unregularized form ($\tilde{\Omega}(\bm{\mu})=0$) the problem is \textit{bilinear} w.r.t the lagrangian multiplier $\bm{\lambda}$ and the occupancy measure (primal variable) $\bm{\mu}$, else it is concave-linear. We sometimes use notation $J(\bm{\mu},\bm{r}) = J(\text{OM}(\bm{\pi}),\bm{r})$ and $K(\bm{\mu},) = K(\text{OM}(\bm{\pi}))$.

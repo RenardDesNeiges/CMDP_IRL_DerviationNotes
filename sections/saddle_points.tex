@@ -10,7 +10,7 @@ In the following section, we introduce, discuss and analyze algorithms for solvi
 \end{align*}
 Where $f:X \times Y \rightarrow \mathbb{R}$ is some scalar function for which we want to find a \textit{saddle point}, i.e. a point $(\bm{x}^*,\bm{y}^*)\in X \times Y$, s.t.
 \begin{align*}
-    f(\bm{x}^*,\bm{y}) \leq \frac{\bm{x}^*}{\bm{y}^*} \leq f(\bm{x},\bm{y}^*),
+    f(\bm{x}^*,\bm{y}) \leq  f(\bm{x}^*,\bm{y}^*) \leq f(\bm{x},\bm{y}^*),
 \end{align*}
 i.e. in plain english "\textit{$(\bm{x}^*,\bm{y}^*)$ is a minimizer in $\bm{x}$ and a maximizer in $\bm{y}$}". Such problems which will prove especially relevant in our study of inverse reinforcement learning. \\
 
@@ -25,9 +25,9 @@ i.e. in plain english "\textit{$(\bm{x}^*,\bm{y}^*)$ is a minimizer in $\bm{x}$ 
 
 
 \begin{definition}
-    (\textbf{Smooth function}) A function $f : \textbf{dom}(f) \rightarrow \mathbb{R}$ is called $\mu$-smooth if it has $\mu$-Lipschitz continuous gradients, i.e. if for any $\bm{x},\bm{y} \in \textbf{dom}(f)$, there exists $\mu \in \mathbb{R}_+$:
+    (\textbf{Smooth function}) A function $f : \textbf{dom}(f) \rightarrow \mathbb{R}$ is called $L$-smooth if it has $L$-Lipschitz continuous gradients, i.e. if for any $\bm{x},\bm{y} \in \textbf{dom}(f)$, there exists $L \in \mathbb{R}_+$:
     \[
-      \|\nabla f(\bm{x}) -\nabla f(\bm{y})\| \leq \mu \| \bm{x} - \bm{y} \|.
+      \|\nabla f(\bm{x}) -\nabla f(\bm{y})\| \leq L \| \bm{x} - \bm{y} \|.
     \]
 \end{definition}
 
@@ -132,7 +132,7 @@ The most simple algorithm is the natural extension of gradient descent/ascent to
 
 \begin{proposition}
     \label{prop:proj_gda_convex_concave}
-    (\textbf{$O(\frac{1}{\sqrt{K}})$ convergence rate}) For $B$-Lipschitz convex concave functions $f:X,Y \rightarrow \mathbb{R}$, defined on two convex domains $X$ and $Y$ with bounded diameter $D=\max \lbrace  \text{diam}(X), \text{diam}(Y) \rbrace$, after $K$ steps, projected gradient descent-ascent (alg \ref{alg:projGDA}) with learning rate $\eta_K = \frac{D}{\sqrt{2k}G}$ has gives an average point for which the duality gap is bounded by:
+    (\textbf{$O(\frac{1}{\sqrt{K}})$ convergence rate}) For $B$-Lipschitz convex concave functions $f:X,Y \rightarrow \mathbb{R}$, defined on two convex domains $X$ and $Y$ with bounded diameter $D=\max \lbrace  \text{diam}(X), \text{diam}(Y) \rbrace$, after $K$ steps, projected gradient descent-ascent (alg \ref{alg:projGDA}) with learning rate $\eta_k = \frac{D}{\sqrt{2k}B}$ has gives an average point for which the duality gap is bounded by:
     \[
         \text{Duality Gap}(\bar{\bm{z}}_K) \leq \frac{4 D B}{\sqrt{K}},
     \]
@@ -194,12 +194,13 @@ The most simple algorithm is the natural extension of gradient descent/ascent to
     Which once plugged into ($d$) give:
     \begin{align*}
         \sum_{k=1...K} f(\bm{x}_k,\bm{y}^*) -f(\bm{x}^*,\bm{y}_k) \leq 
-        \frac{D^2}{\eta_K} + G^2 \sum_{k=1...K}\eta_k = \frac{D^2 \sqrt{K}}{\eta} + G^2 \eta \sum_{k=1...K}\frac{1}{\sqrt{k}} \\
-        \leq  \frac{D^2 \sqrt{K}}{\eta} +2 G^2 \eta \sqrt{K}.
+        \frac{D^2}{\eta_K} + B^2 \sum_{k=1...K}\eta_k = \frac{D^2 \sqrt{K}}{\eta} + B^2 \eta \sum_{k=1...K}\frac{1}{\sqrt{k}} \\
+        \leq  \frac{D^2 \sqrt{K}}{\eta} +2 B^2 \eta \sqrt{K}.
     \end{align*}
     Thus we have:
     \begin{align*}
-        \frac{1}{K} \Big[ \sum_{k=1...K} f(\bm{x}_k,\bm{y}^*) -f(\bm{x}^*,\bm{y}_k)  \Big] \leq \frac{D^2 }{ \eta \sqrt{K}} +  2 G^2 \eta \frac{1}{\sqrt{K}} = \frac{4DB}{\sqrt{K}}
+        \frac{1}{K} \Big[ \sum_{k=1...K} f(\bm{x}_k,\bm{y}^*) -f(\bm{x}^*,\bm{y}_k)  \Big] \leq \frac{D^2 }{ \eta \sqrt{K}} +  2 B^2 \eta \frac{1}{\sqrt{K}}  \\
+        \text{(Optimizing $\eta$) } = \frac{4DB}{\sqrt{K}} 
     \end{align*}
 \end{proof}
 
@@ -210,7 +211,11 @@ The most simple algorithm is the natural extension of gradient descent/ascent to
 % }
 \subsection{Extra-Gradient Descent Ascent}
 \label{sec:extra_grad}
-
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/Extra_Gradient.png}
+    \caption{An illustration of an extra-gradient step.}
+\end{figure}
 Next, we consider the Extra-Gradient Descent Ascent method (EG), which provides an approximation of the \textit{implicit} proximal point method and has better performance compared to the naïve GDA approach, specifically:
 \begin{enumerate}
     \item a better convergence rate on general convex-concave programs ($O(\frac{1}{K})$ instead of $O(\frac{1}{\sqrt{K}})$)
@@ -276,7 +281,7 @@ Observe that for $\nabla f$ $\mu$-Lipschitz, $F$ is a $2\mu$-Lipschitz operator.
 
 \begin{proposition}
     \label{prop:proj_eg_smooth_convex_concave}
-    For $\mu$-smooth convex-concave functions, where $X$ and $Y$ have max diameter $D$, expected gradient with $\eta_k = \frac{1}{2L}$ gives the following duality gap for the expected steps:
+    For $\mu$-smooth convex-concave functions, where $X$ and $Y$ have max diameter $D$, expected gradient with $\eta_k = \frac{1}{2\mu}$ gives the following duality gap for the expected steps:
     the duality gap is bounded by:
     \[
         \text{Duality Gap}(\bar{\bm{z}}_K) \leq \frac{2 D^2 \mu}{K},
@@ -406,26 +411,6 @@ Which bounds the duality gap and completes the proof.
 \end{proof} 
 
 
-\begin{proposition}
-    \label{prop:proj_eg_smooth_convex_concave_last_it}
-    For $\mu$-smooth convex-concave functions, where $X$ and $Y$ have max diameter $D$, expected gradient with $\eta_k = \frac{1}{2L}$ gives the following duality gap for the expected steps:
-    the duality gap is bounded by:
-    \[
-        \text{Duality Gap}({\bm{z}}_K) \leq \frac{2 \sqrt{2} D^2 \mu}{K},
-    \]
-    where $\bar{\bm{z}}_K = \frac{1}{K} \sum_{k = 1...K} (\bm{x}_k,\bm{y}_k)$.
-\end{proposition}
-
-
-% \color{red} \textbf{RED BECAUSE CURRENTLY IN MY TODOS} \\
-
-% But essentially I want this section to show that under the same assumptions as in the GDA situation 
-% \begin{enumerate}
-%     \item we have convergence in $O(\frac{1}{K})$ 
-%     \item we have last iterate convergence in the bilinear setting unlike in GDA, also show example in GDA
-% \end{enumerate}
-
-
 \subsection{Optimistic Gradient Descent Ascent}
 
 Here we consider the Optimistic Gradient Descent-Ascent method (OG) (sometimes also refered to as Past-Extra Gradient), which provides an alternate approximation of the (implicit) proximal point method. It displays better performance compared to the naïve GDA approach (from section \ref{sec:GDA}). 
@@ -445,13 +430,13 @@ Here we consider the Optimistic Gradient Descent-Ascent method (OG) (sometimes a
     return $(\bm{x}_N,\bm{y}_N)$
 \end{algorithm}
 
-\begin{proposition}
-    (\textbf{Last-Iterate Convergence of OG}) Consider a saddle point problem defined by a $\mu$-Smooth function $f:X\times Y \rightarrow \mathbb{R}$, we have that:
-    \begin{align*}
-        \text{Duality Gap}({\bm{z}}_K) \leq \frac{64 \mu H_0^2}{\sqrt{3K+32}},
-    \end{align*}
-    with $H_0 = 3 \|\bm{z}_0-\bm{z}^*\| + \frac{1}{120\mu^2}\|F(z_0)\|^2$. This result is from \cite{gorbunov2022lastiterate} and is originally expressed in more general variational inequalities term.
-\end{proposition}
+% \begin{proposition}
+%     (\textbf{Last-Iterate Convergence of OG}) Consider a saddle point problem defined by a $\mu$-Smooth function $f:X\times Y \rightarrow \mathbb{R}$, we have that:
+%     \begin{align*}
+%         \text{Duality Gap}({\bm{z}}_K) \leq \frac{64 \mu H_0^2}{\sqrt{3K+32}},
+%     \end{align*}
+%     with $H_0 = 3 \|\bm{z}_0-\bm{z}^*\| + \frac{1}{120\mu^2}\|F(z_0)\|^2$. This result is from \cite{gorbunov2022lastiterate} and is originally expressed in more general variational inequalities term.
+% \end{proposition}
 
 
 \subsection{Summary of Known Results}
