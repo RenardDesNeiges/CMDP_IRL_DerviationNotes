@@ -1,0 +1,122 @@
+
+\begin{claim}
+    \label{claim:square_2_norm_of_policy_bounds_infinity_log_policy_norm}
+    For any two policies $\bm{\pi}, \bar{\bm{\pi}} \in \Pi$ we have that:
+    \begin{align*}
+        \frac{1}{4} \| \bm{\pi} - \bar{\bm{\pi}} \|_2^2
+        \leq
+        n \cdot \| \log \bm{\pi} - \log \bar{\bm{\pi}} \|_\infty,
+    \end{align*}
+    where $\log$ are vectorized and $n=|S|$ is the number of states.
+    \begin{proof}
+        \begin{align*}
+            \frac{1}{4} \| \bm{\pi} - \bar{\bm{\pi}} \|_2^2
+            & \leq
+            n \frac{1}{4} \| \bm{\pi} - \bar{\bm{\pi}} \|_1^2 
+            && \|\cdot\|_2 \leq \|\cdot\|_1 \\
+            & =
+            n \frac{1}{4} \norm{
+                    \begin{bmatrix}
+                        \bm{\pi} (\cdot|s_1) \\ \vdots \\
+                        \bm{\pi} (\cdot|s_n)
+                    \end{bmatrix} -
+                    \begin{bmatrix}
+                        \bar{\bm{\pi}} (\cdot|s_1) \\ \vdots \\
+                        \bar{\bm{\pi}} (\cdot|s_n)
+                    \end{bmatrix}
+                }_1^2 
+            && \text{isolate distribs.} \\
+            & = \frac{1}{4} \Big( \sum_{s\in S} \| \bm{\pi} (\cdot|s) 
+            - \bar{\bm{\pi}} (\cdot|s) \|_1 \Big)^2
+            && \text{def of $\|\cdot\|_1$} \\
+            & = \sum_{s\in S} \frac{1}{2} \| \bm{\pi} (\cdot|s) 
+            - \bar{\bm{\pi}} (\cdot|s) \|_1^2 
+            && (a+b)^2 \leq 2(a^2+b^2) \\
+            & = \sum_{s\in S} D_\text{KL}( \bm{\pi} (\cdot|s) 
+            || \bar{\bm{\pi}} (\cdot|s) )
+            && \frac{1}{2} \|\bm{p}_1 - \bm{p}_2 \|_1^2 \leq D(\bm{p}_1||\bm{p}_2) \\
+            & = \sum_{s\in S} | \bm{\pi}^T (  \log \bm{\pi} - \log \bar{\bm{\pi}} )  |
+            && \text{def. of KL}\\
+            & \leq \sum_{s\in S} 
+            \overbrace{\| \bm{\pi} \|_1 }^{=1}
+            \cdot \|  \log \bm{\pi} - \log \bar{\bm{\pi}} \|_\infty  
+            && \text{Hödler's ineq.}\\
+            & \leq \sum_{s\in S} 
+             \|  \log \bm{\pi} - \log \bar{\bm{\pi}} \|_\infty  
+            && \\
+            & \leq 
+            n \cdot
+             \|  \log \bm{\pi} - \log \bar{\bm{\pi}} \|_\infty  
+            && \\
+        \end{align*}
+        The proof hinges on the inequality:
+        \[ \frac{1}{2} \|\bm{p}_1 - \bm{p}_2 \|_1^2 \leq D(\bm{p}_1||\bm{p}_2), \]
+        which can be found in the Theorem $11.6$ of \cite{Cover2006}.
+    \end{proof}
+\end{claim}
+
+\begin{claim}
+    \label{claim:infinity_log_exp}
+    For any two vectors $v_1,v_2 \in \mathbb{R}^n$ we have that:
+    \begin{align*}
+        |\log \| \exp v_1 \|_1 -\log \| \exp v_2 \|_1| \leq \|v_1-v_2\|_\infty,
+    \end{align*}
+    where $\exp \cdot$ is applied element-wise.
+    \begin{proof}
+        We start by using that the mean-value theorem states that there exists a vector $v_c$ which is a convex combination of $v_1$ and $v_2$ s.t. the following equality is verified:
+        \[
+            | \log \bigl( \| \exp v_1 \|_1 \bigr) - \log \bigl( \| \exp v_2 \|_1 \bigr)  | 
+            =  
+            | \big\langle 
+            v_1 - v_2,
+            \nabla_v \log (\exp v) |_{v = v_c}
+            \big\rangle |,
+        \]
+        and then it's just a matter of bounding the right terms:
+        \begin{align*}
+            &| \log \bigl( \| \exp v_1 \|_1 \bigr) - \log \bigl( \| \exp v_2 \|_1 \bigr)  | \\
+            =  &
+            | \big\langle 
+            v_1 - v_2,
+            \nabla_v \log (\exp v) |_{v = v_c}
+            \big\rangle | && \text{by the mean value theorem}
+            \\
+            \leq  & 
+            \| v_1 - v_2 \|_\infty \| \nabla_v \log (\exp v) |_{v = v_c} \|_1
+            && \text{Hodler's inequality} 
+            \\
+            =  & 
+            \| v_1 - v_2 \|_\infty
+            &&
+            \| \nabla_v \log (\exp v) |_{v = v_c} \|_1 =
+            \Bigg\|\frac{\exp(v_c)}{\|v_c\|_1}\Bigg\|_1 = 1.
+        \end{align*}
+    \end{proof}
+\end{claim}
+
+\begin{lemma}
+    \label{lemma:f_lipschitz_wrt_rew_params}
+    \begin{align*}
+        \|\nabla_{\bm{w}} f(\bm{w},\bm{\lambda},\bm{\theta})\|_2 \leq B_{\bm{w}}
+    \end{align*}
+\end{lemma}
+
+\begin{lemma}
+    \label{lemma:optQ_is_lipschitz_wrt_w}
+    \begin{align*}
+        \| \bm{Q}^{*}_{\tilde{\bm{r_1}}} - \bm{Q}^{*}_{\tilde{\bm{r_2}}} \|_\infty  
+        \leq L_q \| \bm{w}_1 - \bm{w}_2 \|_2
+    \end{align*}
+\end{lemma}
+
+\begin{lemma}
+    \label{lemma:sameQ_is_lipschitz_wrt_w}
+    \begin{align*}
+        \| \bm{Q}^{\pi}_{\tilde{\bm{r_1}}} - \bm{Q}^{\pi}_{\tilde{\bm{r_2}}} \|_\infty  
+        \leq L_q \| \bm{w}_1 - \bm{w}_2 \|_2
+    \end{align*}
+\end{lemma}
+
+\begin{lemma}[$\tilde{f}$ is convex with bounded gradients]
+    \label{lemma:ftilde_is_convex}
+\end{lemma}

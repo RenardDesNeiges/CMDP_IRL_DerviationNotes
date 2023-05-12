@@ -1,26 +1,33 @@
 \documentclass[11pt]{article}
 
+
 \usepackage{sectsty}
 \usepackage{graphicx}
 \usepackage[T1]{fontenc}
 \usepackage{epigraph} %quotes
 \usepackage{amssymb} %math symbols
 \usepackage{mathtools} %more math stuff
+% \usepackage{physics}
+\usepackage{amsmath} 
 \usepackage{amsthm} %theorems, proofs and lemmas
-\usepackage[ruled,vlined]{algorithm2e} %algoritms/pseudocode
+\usepackage[ruled,vlined]{algorithm2e} %algorithms
 \usepackage{bm} 
 \usepackage{subfiles} 
 \usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
-\usepackage[
-backend=biber,
-style=numeric,
-sorting=ynt
-]{biblatex}
-\addbibresource{Bibliography.bib}
+\usepackage{wasysym}
 
-%% Theorem notation
+\usepackage[
+    backend=biber,
+    style=authoryear,
+    sorting=ynt
+    ]{biblatex}
+    \addbibresource{Bibliography.bib}
+    
+    %% Theorem notation
+% \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \newtheorem{theorem}{Theorem}[section]
+\newtheorem{claim}{Claim}[section]
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{problem}{Problem}[section]
@@ -85,11 +92,15 @@ sorting=ynt
 \subfile{sections/bandits.tex}
 \subfile{sections/eg-cop.tex}
 \subfile{sections/gda-cop.tex}
-\subfile{sections/bandits_error_bound.tex}
+% \subfile{sections/bandits_error_bound.tex}
 
 
-% \newpage
-% \section{Convergence of CIRL under natural gradients}
+\newpage
+\section{Convergence of CIRL in the full-MDP setting}
+\subfile{sections/cirl_alg.tex}
+\newpage
+\subsubsection{Auxiliary lemmas and useful claims}
+\subfile{sections/cirl_aux_lemmas.tex}
 
 
 

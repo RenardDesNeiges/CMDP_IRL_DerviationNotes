@@ -35,6 +35,7 @@ The MDP, doesn't specify how actions are selected, in practice, this is done by 
 Assuming actions are picked from some fixed policy function $\bm{\pi}\Pi$ the progression from state to state of the MDP becomes a Markov Chain described by the closed-loop transition law.
 
 \begin{definition}
+    \label{def:closed_loop_transition_law}
     (\textbf{Closed-Loop Transition Law})
     We define the \textbf{closed-loop transition law} $P^\pi :S \rightarrow \Delta_S$ as a function that gives the distribution over the next state as a function of the current state, this distribution is trivially given by: 
     \begin{align*}
@@ -81,6 +82,7 @@ Since the process is stochastic it makes more sense to think in terms of \textit
 \end{definition}
 
 \begin{definition}
+    \label{def:obj_function}
     (\textbf{Objective Function})
     For a given policy $\pi:S\rightarrow \Delta A$, convex policy regularizer function $\Omega: \Pi \rightarrow \mathbb{R}$ and and under an initial state distribution $\bm{\nu} \in \Delta_S$ we define the \textbf{objective function} as:
     \begin{align*}
@@ -90,7 +92,7 @@ Since the process is stochastic it makes more sense to think in terms of \textit
 \end{definition}
 
 \subsubsection{The Occupancy Measure}
-
+\label{sec:occupancy_measure}
 We now discuss a descriptor of the distribution of an agent's position across all states induced by some policy $\pi$: the \textit{occupancy measure} is defined as follows.
 
 \begin{definition}
@@ -115,6 +117,7 @@ We now discuss a descriptor of the distribution of an agent's position across al
 \end{definition}
 
 \begin{definition}
+    \label{def:state_occupancy_measure}
     (\textbf{State-Occupancy Measure}) 
     Similarly to the (state-action) occupancy measure, one can define a \textbf{state-occupancy measure} $\bm{\mu}^\pi_S \in \Delta_{S}$ is defined for a given state as follows:
     \begin{align*}
@@ -165,7 +168,7 @@ For convenience we interchangeably write the objective as a function of the poli
     \begin{enumerate}
         \item compute the \textbf{closed loop transition law} $P^\pi$,
         \item compute the \textbf{state-occupancy measure} from the occupancy measure, this is easy as it has a matrix-geometric series form:
-        \[  \mu^\pi_S = (1-\gamma) \lim_{T \rightarrow + \infty} \sum_{t=0}^T  (\gamma P^\pi)^t = (1-\gamma) (I - \gamma P^\pi)^{-1} \]
+        \[  \mu^\pi_S = (1-\gamma) \lim_{T \rightarrow + \infty} \sum_{t=0}^T  (\gamma P^\pi)^t \cdot \bm{\nu} = (1-\gamma) (I - \gamma P^\pi)^{-1} \bm{\nu}  \]
         \item finally one can compute the \textbf{occupancy measure} by
         \[ \mu(s,a) = \pi(a|s)\mu_S(s).\]
     \end{enumerate}
@@ -179,7 +182,163 @@ For convenience we interchangeably write the objective as a function of the poli
     Notice that the mapping is ill-defined for unvisited states, but this does not matter changes in policy on unvisited states have no impact on the discounted reward.
 \end{observation}
 
-For convenience we define two maps that allow us to go from occupancy map to policies and from policies to occupancy maps.
+For convenience we define two maps that allow us to go from occupancy map to policies and from policies to occupancy maps. Here we state and prove a useful lemma which will be critical to proving the global convergence of CIRL algorithms.
+
+\begin{lemma}[Occupancy measure is Lipschitz with respect to the to the policy]
+    \label{lemma:mu_is_lipschitz_with_pi} More specifically, the occupancy measures $\bm{\mu}^{\pi}$ and $\bm{\mu}^{\bar{\pi}}$ respectively induced by policies $\bm{\pi}_1$ and $\bm{\pi}_2$ on identical MDPs (with the same state and action sets $S$ and $A$ and the same \textit{probabilistic markovian transition law} $P$, rewards can be different) satisfy the following inequality:
+    \begin{align*}
+        \| \bm{\mu}^{\pi} - \bm{\mu}^{\bar{\pi}} \|_2 
+        \leq 
+        B_\mu \| \bm{\pi} - \bar{\bm{\pi}} \|_2,
+    \end{align*}
+    where $B_\mu = \frac{1}{1-\gamma}$ and $\|\cdot\|_2$ denotes the l2 norm.
+\end{lemma}
+\begin{proof}
+    We start by expanding the expression from the lefthand side of the inequality we are trying to prove: 
+    \begin{align*}
+        \| \bm{\mu}^{\pi} - \bm{\mu}^{\bar{\pi}} \|_2 
+        &= \sqrt{
+            \sum_{s,a\in S\times A} \Bigl(
+                \mu^{\pi} (s,a) - \mu^{\bar{\pi}} (s,a)
+            \Bigr)^2
+        } \\
+        & \stackrel{(i)}{=}  \sqrt{
+            \sum_{s,a\in S\times A} \Bigl(
+                \mu^{\pi} (s) \pi(a|s) - \mu^{\bar{\pi}} (s) \bar{\pi}(a|s)
+            \Bigr)^2
+        } \\
+        & \stackrel{(ii)}{=}  \sqrt{
+            \sum_{s,a\in S\times A} \Bigl(
+                \mu^{\pi} (s) \big( \pi(a|s) - \bar{\pi}(a|s) \big)
+                + \bar{\pi}(a|s) \big( \mu^{\pi} (s) - \mu^{\bar{\pi}} (s)  \big)
+            \Bigr)^2
+        } \\
+        & \stackrel{(iii)}{\leq}  \overbrace{\sqrt{
+            \sum_{s,a\in S\times A} \Bigl(
+                \mu^{\pi} (s) \big( \pi(a|s) - \bar{\pi}(a|s) \big)
+            \Bigr)^2
+        } }^{\leq  \| \bm{\pi} - \bar{\bm{\pi}} \|_2 } \\&
+        + \overbrace{ \sqrt{
+            \sum_{s,a\in S\times A} \Bigl(
+                \bar{\pi}(a|s) 
+                \big( \mu^{\pi} (s) - \mu^{\bar{\pi}} (s)  \big)
+            \Bigr)^2
+        } }^{\leq \| \bm{\mu}_s - \bar{\bm{\mu}}_s \|_2}\\
+        & \stackrel{(iv)}{\leq} 
+        \| \bm{\pi} - \bar{\bm{\pi}} \|_2 +
+         \| \bm{\mu}_s - \bar{\bm{\mu}}_s \|_2.
+    \end{align*}
+    Where in $(i)$ we just plug in the defintion of the state-occupancy measure (def \ref{def:state_occupancy_measure}), in $(ii)$ we just add $0 = \mu^{\pi}(s)\bar{\pi}(a|s) - \mu^{\pi}(s)\bar{\pi}(a|s)$ and rearrang. Next, we just use a triangle inequality $(iii)$ and observing that both sides are upper bounded by l2 norms we are done with the first step. \\
+
+    We will now be concerned with bounding $\| \bm{\mu}_s - \bar{\bm{\mu}}_s \|_2$ by $\| \bm{\pi} - \bar{\bm{\pi}} \|_2$ (mutliplied by some constant term). \\
+
+    To do so we first show a useful result on the spectral norm of the difference between the inverse of two matrices:
+    \begin{align*}
+        \|A^{-1} + B^{-1}\| 
+        & \stackrel{(i)}{=} 
+        \| A^{-1} (A+B) B^{-1} \| \\ 
+        & \stackrel{(ii)}{\leq}  
+        \| A^{-1} \| \cdot \| (A+B) \| \cdot \| B^{-1} \| \\
+        & \stackrel{(iii)}{=}  
+        \frac{\| (A+B) \|}{\sigma_\text{min}(A)\cdot \sigma_\text{min}(B)}. \tag{l}
+    \end{align*}
+
+    Where $(i)$ holds by the equality $A^{-1} + B^{-1} = A^{-1} (A+B) B^{-1}$ which holds for any two invertible matrices (a proof can be found in the solution handbook to \cite{searle82}), $(ii)$ holds by submultiplicativity of the spectral norm and $(iii)$ uses the definition of the spectal norm ($\sigma_\text{min}(A)$ denotes the minimum eigenvalue of the matrix $A$). \\
+
+    We now get back to bounding $\| \bm{\mu}_s - \bar{\bm{\mu}}_s \|_2$:
+    \begin{align*}
+        \| \bm{\mu}_s - \bar{\bm{\mu}}_s \|_2 
+        & \stackrel{(i)}{=} 
+        (1-\gamma) \Bigg\| \Big[ 
+            \big(I-\gamma P^{\pi}\big)^{-1} 
+            - \big(I-\gamma P^{\bar{\pi}}\big)^{-1} 
+            \Big] \bm{\nu} \Bigg\|_2 \\
+        & \stackrel{(ii)}{\leq} 
+        (1-\gamma) \Bigg\| \Big[ 
+            \big(I-\gamma P^{\pi}\big)^{-1} 
+            - \big(I-\gamma P^{\bar{\pi}}\big)^{-1} 
+            \Big] \Bigg\| \cdot \| \bm{\nu} \|_2 \\
+        & \stackrel{(iii)}{\leq} 
+        (1-\gamma) \Bigg\| \Big[ 
+            \big(I-\gamma P^{\pi}\big)^{-1} 
+            - \big(I-\gamma P^{\bar{\pi}}\big)^{-1} 
+            \Big] \Bigg\| \\
+        & \stackrel{(iv)}{\leq} 
+        (1-\gamma)^{-1} \Bigg\| \Big[ 
+            \big(I-\gamma P^{\pi}\big)
+            - \big(I-\gamma P^{\bar{\pi}}\big)
+            \Big] \Bigg\| \\
+        & = \frac{\gamma}{1-\gamma}
+        \big\| 
+            P^{\pi} -P^{\bar{\pi}}
+        \big\|. 
+    \end{align*}
+    Where in $(i)$ we just use the closed form computation of the state-occupancy measure from the policy (as shown in obs \ref{obs:policy_occupancy_bijection}), in $(ii)$ we just use the definition of the spectral norm with pulls out the $\|\bm{\nu}\|_2$ term, which we know is smaller or equal to $1$ (since it is the l2 norm of a probability distribution) which gives us inequality $(iii)$. Now plugging in the result from $(l)$ and using that the smallest eigenvalue of $\big(I-\gamma P^{\pi}\big)^{-1}$ is greater or equal to $1-\gamma$ we get inequality $(iv)$ which simplifies into the last line.\\
+
+    Now we just need to bound $ \big\|P^{\pi} -P^{\bar{\pi}} \big\|$ which we do as follows:
+    \begin{align*}
+        \big\| 
+            P^{\pi} -P^{\bar{\pi}}
+        \big\|
+        & \stackrel{(i)}{\leq} 
+        \big\| 
+            P^{\pi} -P^{\bar{\pi}}
+        \big\|_F\\
+        & \stackrel{(ii)}{=} 
+        \sqrt{
+            \sum_{s,s' \in S \times S} 
+            \big(
+                P^{\pi}(s'|s) - P^{\bar{\pi}}(s'|s)
+            \big)^2
+        } \\
+        & \stackrel{(iii)}{=} 
+        \sqrt{
+            \sum_{s,s' \in S \times S} 
+            \Big(
+                \sum_{a\in A}P(s'|s,a) (\pi(a|s)-\bar{\pi}(a|s))
+            \Big)^2
+        } \\
+        & =
+        \sqrt{
+            \sum_{s,a,s' \in S \times A \times S} 
+            P(s'|s,a)^2 
+            (\pi(a|s)-\bar{\pi}(a|s))^2
+        } \\
+        & =
+        \sqrt{
+            \sum_{s,a \in S \times A} 
+            \Big( \sum_{s' \in S} P(s'|s,a)^2  \Big)
+            (\pi(a|s)-\bar{\pi}(a|s))^2
+        } \\
+        & \leq
+        \sqrt{
+            \sum_{s,s' \in S \times S} 
+            (\pi(a|s)-\bar{\pi}(a|s))^2
+        } = \| \bm{\pi} - \bar{\bm{\pi}} \|_2.
+    \end{align*}
+    Where $(i)$ comes from the fact that the Frobenius norm upper bounds the spectral norm, $(ii)$ is by the definition of the Frobenius norm, and $(iii)$ just plugs in the definition of the closed loop transition law (def \ref{def:closed_loop_transition_law}) from there we can just rearange and isolate the $\big( \sum_{s' \in S} P(s'|s,a)^2 \big)$ term, which since $P(\cdot,s,a) \in \Delta_S$ we know is less than $1$. From there we just observe that we have gotten to the definition of the $l2$ norm. \\
+
+    Putting everything back together we have:
+    \begin{align*}
+        \| \bm{\mu}^{\pi} - \bm{\mu}^{\bar{\pi}} \|_2 
+        &\leq 
+        \| \bm{\pi} - \bar{\bm{\pi}} \|_2 +
+        \| \bm{\mu}_s - \bar{\bm{\mu}}_s \|_2 \\
+        &\leq 
+        \| \bm{\pi} - \bar{\bm{\pi}} \|_2 +
+        \frac{\gamma}{1-\gamma}
+        \big\| 
+            P^{\pi} -P^{\bar{\pi}}
+        \big\| \\ 
+        &\leq 
+        \| \bm{\pi} - \bar{\bm{\pi}} \|_2 +
+        \frac{\gamma}{1-\gamma}
+        \| \bm{\pi} - \bar{\bm{\pi}} \|_2 \\
+        & = 
+        \frac{1}{1-\gamma}
+        \| \bm{\pi} - \bar{\bm{\pi}} \|_2
+    \end{align*}
+\end{proof}
 
 \begin{definition}
     The $\text{OM}:\Pi \rightarrow \mathcal{M}$ returns the occupancy measure $\bm{\mu}=\text{OM}(\bm{\pi})$ associated with a given policy $\bm{\pi}$.

@@ -147,15 +147,15 @@ which provides a way of evaluating \ref{def:cib_sol_map} (this can be shown to b
 \begin{equation}
     \label{eq:dualConstrainedBanditIRL}
     \begin{aligned}
-        \min_{\bm{r}\in\mathcal{R},\bm{\zeta} \geq 0}\max_{\bm{\pi}\in\Delta_{A}} f_\text{CIB}(\bm{r},\bm{\zeta},\bm{\pi}).
+        \min_{\bm{r}\in\mathcal{R},\bm{\lambda} \geq 0}\max_{\bm{\pi}\in\Delta_{A}} f_\text{CIB}(\bm{r},\bm{\lambda},\bm{\pi}).
     \end{aligned}
 \end{equation}
-where $f_\text{CIB}(\bm{r},\bm{\zeta},\bm{\pi}) = \langle \bm{r}, \bm{\pi}-\bm{\pi}^E \rangle -\Omega(\bm{\pi}) + \langle \bm{\zeta}, \bm{b}-\Psi \bm{\pi}\rangle$ is our objective function.
+where $f_\text{CIB}(\bm{r},\bm{\lambda},\bm{\pi}) = \langle \bm{r}, \bm{\pi}-\bm{\pi}^E \rangle -\Omega(\bm{\pi}) + \langle \bm{\lambda}, \bm{b}-\Psi \bm{\pi}\rangle$ is our objective function.
 \begin{proposition}
     \label{prop:bandit_strong_duality}
-    (\textbf{Strong Duality}) Assuming that $\exists \bm{\pi}^E\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\zeta}^* \geq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\zeta}^*$. I.e. 
+    (\textbf{Strong Duality}) Assuming that $\exists \bm{\pi}^E\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\lambda}^* \geq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\lambda}^*$. I.e. 
     \begin{align*}
-        \text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\zeta}^*).
+        \text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\lambda}^*).
     \end{align*}
 \end{proposition}
 \begin{proof}
@@ -181,7 +181,7 @@ From proposition \ref{prop:bandit_strong_duality} we know that solving problem \
 %     By direct computation. Observe that:
 %     \begin{enumerate}
 %         \item the max diameter cannot be bounded by the constraint set, but one can just pick $\|\bm{z}_0-\bm{z}^*\|$,
-%         \item the constraints $\bm{r} \in \mathcal{R}_{L_1}$, $\bm{\pi} \in \Delta_A$ and $\bm{\zeta} \geq 0$ are convex,
+%         \item the constraints $\bm{r} \in \mathcal{R}_{L_1}$, $\bm{\pi} \in \Delta_A$ and $\bm{\lambda} \geq 0$ are convex,
 %         \item the function $-\beta H_2(\bm{\pi})$ is $2 \beta \sqrt{n}$-smooth.
 %     \end{enumerate}
 %     The results follows from the analysis of the projected EG algorithm (see proposition \ref{prop:proj_eg_smooth_convex_concave}).
