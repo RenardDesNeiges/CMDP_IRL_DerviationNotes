@@ -1,3 +1,15 @@
+\begin{assumption}[Reward gradients are bounded]
+    \label{assumption:bounded_reward_grads}
+    We require that $\forall \bm{w} \in \text{dom}(\bm{w})$ the following is true:
+    \[ \|\frac{\partial \bm{r}_w}{\partial w}\|_2 \leq B_w, \]
+    this is trivially satisfied when consider linear reward classes, specifically we have $\bm{r}_w = \Phi \bm{w}$ and thus:
+    \begin{align*}
+        \frac{\partial \bm{r}_w}{\partial w}
+        = 
+        \Phi,
+    \end{align*}
+    and thus $B_w=\|\Phi\|$ where  $\|\cdot\|$ denotes the spectral norm.
+\end{assumption}
 
 \begin{claim}
     \label{claim:square_2_norm_of_policy_bounds_infinity_log_policy_norm}
@@ -94,29 +106,255 @@
     \end{proof}
 \end{claim}
 
-\begin{lemma}
-    \label{lemma:f_lipschitz_wrt_rew_params}
+\begin{claim}[Bounded gradients of the objective function with respect to the Lagrande and reward parameters]
+    \label{claim:f_lipschitz_wrt_rew_params}
+    For any Shannon regularized CMDP, the following holds:
     \begin{align*}
-        \|\nabla_{\bm{w}} f(\bm{w},\bm{\lambda},\bm{\theta})\|_2 \leq B_{\bm{w}}
+        \|\nabla_{\bm{w}} f(\bm{w},\bm{\lambda},\bm{\theta})\|_2 \leq 2B_{\bm{w}}\\
+        \|\nabla_{\bm{\lambda}} f(\bm{w},\bm{\lambda},\bm{\theta})\|_2 \leq \|\Psi\|.
     \end{align*}
-\end{lemma}
+    \begin{proof}
+        This is just a matter of calculating the gradients explicitly and using the bounds that we know are true:
+        \begin{align*}
+            \|\nabla_{\bm{w}} f(\bm{w},\bm{\lambda},\bm{\theta})\|_2
+            &=
+            \Big\|
+                \nabla_{\bm{w}} \Bigl(
+                    \langle \bm{r}, \bm{\mu}-\bm{\mu}^E \rangle
+                    \\ &
+                    -(\tilde{\Omega}(\bm{\mu})-\tilde{\Omega}(\bm{\mu}^E)) + \langle \bm{\lambda}, \bm{b}-\Psi^T \bm{\mu} \rangle
+                \Bigr)
+                \Big\|_2\\
+            &=
+            \norm{
+                (\bm{\mu}-\bm{\mu}^E)
+                \frac{\partial \bm{r}}{\partial \bm{w}}
+            }_2\\
+            &\leq
+            \| (\bm{\mu}-\bm{\mu}^E)\|_2 \cdot
+            \| \frac{\partial \bm{r}}{\partial \bm{w}}\|_2
+            && \text{triangle ineq}
+            \\&\leq 
+            \| (\bm{\mu}-\bm{\mu}^E)\|_2 \cdot
+            B_w && \text{assumption \ref{assumption:bounded_reward_grads}}
+            \\
+            &\leq
+            2\sup_{\bm{\mu}}  \| \bm{\mu} \|_2 \cdot
+            B_w = 2 B_w. && \mu \in \Delta_{A\times S}
+            \\
+        \end{align*}
+        \begin{align*}
+            \|\nabla_{\bm{\lambda}} f(\bm{w},\bm{\lambda},\bm{\theta})\|_2
+            &=
+            \Big\|
+                \nabla_{\bm{\lambda}} \Bigl(
+                    \langle \bm{r}, \bm{\mu}-\bm{\mu}^E \rangle
+                    \\ &
+                    -(\tilde{\Omega}(\bm{\mu})-\tilde{\Omega}(\bm{\mu}^E)) + \langle \bm{\lambda}, \bm{b}-\Psi^T \bm{\mu} \rangle
+                \Bigr)
+                \Big\|_2\\
+            &=
+            \norm{
+                \Psi^T \bm{\mu}
+            }_2\\
+            &\leq
+            \norm{
+                \Psi
+            }.
+            && \text{spectral norm def.}
+        \end{align*}
+    \end{proof}
+\end{claim}
 
-\begin{lemma}
+\begin{lemma}[Optimal $Q$-values are Lipschitz in reward and Lagrange parameters]
     \label{lemma:optQ_is_lipschitz_wrt_w}
+    Consider the optimal $Q$ values induced by two different rewards in a constrained, Shannon-regularized Markov decision process, we have that, assuming assumption \ref{assumption:bounded_reward_grads} is satisfied, for any $\bm{w}_1,\bm{w_2} \in \text{dom}(\bm{w})$ and any $\bm{\lambda}_1,\bm{\lambda}_2\in\mathcal{B}$, the inequality below holds:
     \begin{align*}
         \| \bm{Q}^{*}_{\tilde{\bm{r_1}}} - \bm{Q}^{*}_{\tilde{\bm{r_2}}} \|_\infty  
-        \leq L_q \| \bm{w}_1 - \bm{w}_2 \|_2
+        \leq \frac{B_w}{1 - \gamma} \| \bm{w}_1 - \bm{w}_2 \|_2 + \frac{\|\Psi\|}{1 - \gamma} \| \bm{\lambda}_1 - \bm{\lambda}_2 \|_2.
     \end{align*}
+    \begin{proof}
+        We follow a derivation very close to the one of Lemma 5.3 in \cite{Zeng2022}. We show lipschitzness by bounding the gradient with respect to parameters $\bm{\lambda}$ and $\bm{w}$, since the derivation is the same for both parameters, we write $\nabla_\lozenge$ for the gradient with respect to either $\bm{\lambda}$ or $\bm{w}$. We start from the definition of the optimal $Q$ value associated with diminished reward $\tilde{\bm{r}}$ for some $(s,a)\in S \times A$s state action pair:
+        \begin{align*}
+            \nabla_\lozenge Q_{\tilde{\bm{r}}}^*(s_0,a_0) 
+            &= \nabla_\lozenge \Big[
+            \tilde{r}_{w,\lambda}(s_0,a_0)
+            +
+            \gamma \mathbb{E}_{s_1 \sim P^{\pi}(s_0,a_0)} \big[
+                V_{\tilde{\bm{r}}}^*(s) (s_1)
+            \big]
+            \Big] \\
+            &\stackrel{(i)}{=} \nabla_\lozenge 
+            \tilde{r}_{w,\lambda}(s_0,a_0)
+            +
+            \gamma \mathbb{E}_{s_1 \sim P^{\pi}(s_0,a_0)} 
+            \Big[
+                \nabla_\lozenge 
+                \log \big\|
+                \exp
+                \bm{Q}_{\tilde{\bm{r}}}^*(s_1,\cdot)
+                \big\|_1
+            \Big]\\
+            &= \nabla_\lozenge 
+            \tilde{r}_{w,\lambda}(s_0,a_0)
+            +
+            \gamma \mathbb{E}_{s_1 \sim P^{\pi}(s_0,a_0)} 
+            \Bigg[
+                \sum_a \frac{Q_{\tilde{\bm{r}}}^*
+                }{\sum_{a'} Q_{\tilde{\bm{r}}}^*(s_1,a') }
+                \nabla_\lozenge 
+                Q_{\tilde{\bm{r}}}^*(s_1,a)
+            \Bigg]\\
+            &= \nabla_\lozenge 
+            \tilde{r}_{w,\lambda}(s_0,a_0)
+            +
+            \gamma \mathbb{E}_{s_1 \sim P^{\pi}(s_0,a_0)} 
+            \Big[
+                \sum_a 
+                \tilde{\pi}(a|s_1)
+                \nabla_\lozenge 
+                Q_{\tilde{\bm{r}}}^*(s_1,a)
+            \Big]\\
+            &= \nabla_\lozenge 
+            \tilde{r}_{w,\lambda}(s_0,a_0)
+            +
+            \gamma \mathbb{E}_{s_1 \sim P^{\pi}(s_0,a_0)~,a_1 \sim \tilde{\pi}} 
+            \Big[
+                \nabla_\lozenge 
+                Q_{\tilde{\bm{r}}}^*(s_1,a_1)
+            \Big]\\
+            &\stackrel{(ii)}{=} 
+            \mathbb{E}_{\tau \sim \tilde{\pi}} 
+            \Big[
+                \sum_{t=0}^{+\infty} \gamma^t 
+                \nabla_\lozenge \tilde{\bm{r}}_{w,\lambda}^{(t)}
+            \Big].
+        \end{align*}
+        We use $(ii)$ that the $V$ value is the average across $Q$ values under policy distribution and simplify until we $(ii)$ identify a recursion. Since we only care about gradient norms we have that:
+        \begin{align*}
+            \big\| \nabla_\lozenge Q_{\tilde{\bm{r}}}^*(s,a)  \big\|_2 
+            &= 
+            \norm{\nabla_\lozenge 
+            \mathbb{E}_{\tau \sim \tilde{\pi}} 
+            \Bigg[
+                \sum_{t=0}^{+\infty} \gamma^t 
+                \nabla_\lozenge \tilde{\bm{r}}_{w,\lambda}^{(t)}
+                \Bigg| s_0=s,a_0=a
+            \Bigg]}_2 
+            && \\
+            &= 
+            \mathbb{E}_{\tau \sim \tilde{\pi}}  
+            \Bigg[ 
+                \sum_{t=0}^{+\infty} \gamma^t 
+                \overbrace{\| \nabla_\lozenge \tilde{\bm{r}}_{w,\lambda}^{(t)} \|_2}^{\leq B_\lozenge}
+                \Bigg| s_0=s,a_0=a
+            \Bigg]
+            && \text{Jensen's ineq.} \\
+            &\leq
+            \mathbb{E}_{\tau \sim \tilde{\pi}}  
+            \Bigg[ 
+                \sum_{t=0}^{+\infty} \gamma^t 
+                B_\lozenge
+                \Bigg| s_0=s,a_0=a
+            \Bigg]
+            && \text{Bouded $\tilde{r}$ gradients.} \\
+            &=
+            \frac{B_\lozenge}{1 - \gamma}
+            && \\
+        \end{align*} 
+        Now using assumption \ref{assumption:bounded_reward_grads} together with the discounted reward we clearly see that the diminished reward $\tilde{\bm{r}} = \bm{r}_w  - \Psi \bm{\lambda}$ has bounded gradients in $\bm{\lambda}$ and $\bm{w}$:
+        \begin{align*}
+            \norm{
+                \nabla_w \tilde{\bm{r}}
+            }= 
+            \norm{
+                \nabla_w {\bm{r}}
+            } \leq B_w
+            && \text{assumption \ref{assumption:bounded_reward_grads}}\\
+            \norm{
+                \nabla_\lambda \tilde{\bm{r}}
+            } \leq 
+            \| \Psi \|
+            && \text{by def of $\tilde{r}$}.
+        \end{align*}
+        Which completes the proof. (The bound established for any state action pair trivially bounds the $\|\cdot\|_\infty$ norm.)
+    \end{proof}
 \end{lemma}
 
-\begin{lemma}
+\begin{lemma}[$Q$-values are Lipschitz in reward and Lagrange parameters for fixed policy]
     \label{lemma:sameQ_is_lipschitz_wrt_w}
+    Consider the $Q$ values induced by the same policy on two different rewards in a constrained, Shannon-regularized Markov decision process, we have that, assuming assumption \ref{assumption:bounded_reward_grads} is satisfied, for any $\bm{w}_1,\bm{w_2} \in \text{dom}(\bm{w})$ and any $\bm{\lambda}_1,\bm{\lambda}_2\in\mathcal{B}$, the inequality below holds:
     \begin{align*}
-        \| \bm{Q}^{\pi}_{\tilde{\bm{r_1}}} - \bm{Q}^{\pi}_{\tilde{\bm{r_2}}} \|_\infty  
-        \leq L_q \| \bm{w}_1 - \bm{w}_2 \|_2
+        \| \bm{Q}^{*}_{\tilde{\bm{r_1}}} - \bm{Q}^{*}_{\tilde{\bm{r_2}}} \|_\infty  
+        \leq \frac{B_w}{1 - \gamma} \| \bm{w}_1 - \bm{w}_2 \|_2 + \frac{\|\Psi\|}{1 - \gamma} \| \bm{\lambda}_1 - \bm{\lambda}_2 \|_2.
     \end{align*}
+    \begin{proof}
+        We follow a derivation very close to the one of Lemma B.3 in \cite{Zeng2022}. We show lipschitzness by bounding the gradient with respect to parameters $\bm{\lambda}$ and $\bm{w}$, since the derivation is the same for both parameters, we write $\nabla_\lozenge$ for the gradient with respect to either $\bm{\lambda}$ or $\bm{w}$. We start by writing out the expectation form of the $Q$-value, for some policy $\pi$:
+        \begin{align*}
+            Q_{\tilde{r}}^\pi(s,a) =
+            \mathbb{E}_{\tau \sim \pi}\Bigg[ 
+                \sum_{t=0}^{+\infty} \gamma^t (\tilde{r}(s_t,a_t)+H(\bm{\pi}(\cdot|s_t))) 
+                \Bigg| s_0 =s, a_0 = a
+            \Bigg].
+        \end{align*}
+        Taking the difference for two different diminished rewards $\tilde{\bm{r}}_1$ and  $\tilde{\bm{r}}_2$ we have:
+        \begin{align*}
+            |Q_{\tilde{r}_1}^\pi(s,a) - Q_{\tilde{r}_2}^\pi(s,a)|
+            &=
+            \Bigg|
+            \mathbb{E}_{\tau \sim \pi}\Bigg[ 
+                \sum_{t=0}^{+\infty} \gamma^t (\tilde{r}_1(s_t,a_t)-\tilde{r}_2(s_t,a_t)\\ &+H(\bm{\pi}(\cdot|s_t))-H(\bm{\pi}(\cdot|s_t))) 
+                \Bigg| s_0 =s, a_0 = a
+            \Bigg]
+            \Bigg|\\
+            &\stackrel{(i)}{=}
+            \Bigg|
+            \mathbb{E}_{\tau \sim \pi}\Bigg[ 
+                \sum_{t=0}^{+\infty} \gamma^t (\tilde{r}_1(s_t,a_t)-\tilde{r}_2(s_t,a_t))
+                \Bigg| s_0 =s, a_0 = a
+            \Bigg]
+            \Bigg|\\
+            &\stackrel{(ii)}{\leq}
+            \mathbb{E}_{\tau \sim \pi}\Bigg[ 
+                \sum_{t=0}^{+\infty} \gamma^t 
+                \big|
+                \tilde{r}_1(s_t,a_t)-\tilde{r}_2(s_t,a_t)
+                \big|
+                \Bigg| s_0 =s, a_0 = a
+            \Bigg]
+            \\
+            &\stackrel{(iii)}{\leq}
+            \mathbb{E}_{\tau \sim \pi}\Bigg[ 
+                \sum_{t=0}^{+\infty} \gamma^t 
+                B_w \|\bm{w}_1-\bm{w}_2\|_2 \\ &
+                + \|\Psi\| \|\bm{\lambda}_1-\bm{\lambda}_2\|_2 
+                \Bigg| s_0 =s, a_0 = a
+            \Bigg]
+            \\
+            &\stackrel{(iv)}{=}
+                \frac{B_w}{1-\gamma} \|\bm{w}_1-\bm{w}_2\|_2 
+                + \frac{\|\Psi\|}{1-\gamma} \|\bm{\lambda}_1-\bm{\lambda}_2\|_2 
+            \\
+        \end{align*}
+        In $(i)$ the regularizers cancel out, then in $(ii)$ we use Jensen's inequality, in $(iii)$ we just plug in the lipschitzness of the reward parametrization (assumption \ref{assumption:bounded_reward_grads} and by definition of the diminished reward). Finally  in $(iv)$ we observe that what is under the expectation is deterministic and that the sum is a geometric series. Since the bound established for any state action pair trivially bounds the $\|\cdot\|_\infty$ norm this completes the proof.
+    \end{proof}
 \end{lemma}
 
-\begin{lemma}[$\tilde{f}$ is convex with bounded gradients]
+\begin{lemma}[$\tilde{f}$ is convex]
     \label{lemma:ftilde_is_convex}
+    \begin{proof}
+        This is a classical convex analysis result that can be found in \cite{boyd2004convex}. Consider $f(\bm{w},\bm{\lambda},\bm{\theta})$ convex in $\bm{z} = [\bm{w},\bm{\lambda}]$, assuming that $\tilde{\bm{\theta}} := \arg \max_{\theta} f(\bm{w},\bm{\lambda},\bm{\theta})$ for fixed $\bm{z}$, and $\tilde{f}(\bm{z}):=f(\bm{w},\bm{\lambda},\tilde{\bm{\theta}})$ Starting with the definition of convexity we have that, for $\gamma\in[0,1]$ and any $\bm{z}_1,\bm{z}_2 \in \text{dom}(\bm{z})$:
+        \begin{align*}
+            \gamma \tilde{f}(\bm{z}_1) + (1-\gamma) \tilde{f}(\bm{z}_2) 
+            & =
+            \max_\theta {f}( \gamma \bm{z}_1,\theta) + \max_\theta {f}(  (1-\gamma) \bm{z}_2, \theta ) \\
+            & \geq
+            \max_\theta \Big( {f}( \gamma \bm{z}_1,\theta)  + {f}(  (1-\gamma) \bm{z}_2, \theta )  \Big)\\
+            & \geq
+            \max_\theta {f}( \gamma \bm{z}_1 + (1-\gamma) \bm{z}_2, \theta ) \\
+            & =
+            \max_\theta \tilde{f}( \gamma \bm{z}_1 + (1-\gamma) \bm{z}_2) .
+        \end{align*}
+        Which verifies by the convexity of $f$, $\tilde{f}$ indeed satisfies the definition of convexity.
+    \end{proof}
 \end{lemma}

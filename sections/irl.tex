@@ -8,6 +8,7 @@ as well as a dataset $\mathcal{D}$ of expert example in the form of trajectories
 \end{align*}
 produced by some expert policy $\bm{\pi}^E$. Assuming the dataset is large enough (which we will do at first), this is equivalent to getting an approximation of the expert's occupancy measure $\bm{\mu}^E$. In the CIRL setting we also generally restrict the reward class $\mathcal{R}$ to some arbitrary convex set in $\mathbb{R}^{nm}$. \\
 \begin{definition}
+    \label{def:CIRL_solmap}
     (\textbf{CIRL Solution Map})
     The \textbf{goal of CIRL} is to find some mapping $\text{CIRL}_\pi : \Pi \rightarrow \mathcal{R}$ (or alternatively $\text{CIRL}_\mu : \mathcal{M} \rightarrow \mathcal{R}$). That satisfies
     \begin{align*}
@@ -74,4 +75,20 @@ The goal of the IRL problem is to recover a reward $\hat{\bm{r}}$ s.t. the exper
     \end{enumerate}
     Observe that the lower bound ($ L(\bm{r},\bm{\mu})=0$) is only achieved if $\langle \bm{r}, \bm{\mu}^E\rangle - \tilde{\Omega}(\bm{\mu}^E)= \langle \bm{r}, \bm{\mu} \rangle - \tilde{\Omega}(\bm{\mu})$, i.e. if $\bm{\mu}^E \in \arg \max_{\bm{\mu} \in \mathcal{F}} \langle \bm{r}, \bm{\mu}^E \rangle + \tilde{\Omega}(\bm{\mu}^E)$ which is equivalent to $\bm{\mu}^E \in  \text{CRL}_\mu(\bm{r})$. I.e. the optimal reward $\bm{r}^*$ of the min-max problem is such that the expert $\bm{\mu}^E$ is optimal w.r.t $\bm{r}^*$.
     
+\end{proof}
+
+\begin{proposition}
+    \label{prop:strong_duality}
+    (\textbf{Strong Duality}) Assuming that $\exists \bm{\pi}^E\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\lambda}^* \geq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\lambda}^*$. I.e. 
+    \begin{align*}
+        \text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\lambda}^*).
+    \end{align*}
+\end{proposition}
+\begin{proof}
+    Using generic Lagrangian Duality theory, we make two observations:
+    \begin{enumerate}
+        \item observe that the problem: $\max_{\bm{\mu} \in \mathcal{F}} \langle \bm{r}, \bm{\mu} \rangle - \tilde{\Omega}(\bm{\pi})$, is a \textbf{strictly convex optimization problem} (for a proof of the convexity of $\tilde{\Omega}$, assuming that $\Omega$ is convex refer to \cite{Schlaginhaufen2023}),
+        \item the primal optimum $\bm{\pi}^*$ is finite as the feasible set $\mathcal{F}$ is bounded and the objective is upper-bounded (since $\Omega$ is strictly convex).
+    \end{enumerate}
+    From Slater's condition it follows that strong duality holds.
 \end{proof}

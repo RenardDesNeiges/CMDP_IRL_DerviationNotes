@@ -61,7 +61,7 @@ In order to get a convergence result we need to show that, under our assumptions
     \begin{align*}
         \pi^*(a) = \frac{\exp(Q^*(a)/\beta)}{\sum_{a'\in A}\exp(Q^*(a')/\beta)}. \tag{A}
     \end{align*}
-    Using from proposition \ref{prop:bandit_strong_duality} that $\text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\lambda}^*)$ we will use that result (on the modified reward function $\tilde{r}$) to compute our bound. We will start by bounding $Q^*$:
+    Using from proposition \ref{prop:strong_duality} that $\text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\lambda}^*)$ we will use that result (on the modified reward function $\tilde{r}$) to compute our bound. We will start by bounding $Q^*$:
     \begin{align*}
         Q^*(a) &= \tilde{r}(a) + \gamma \mathbb{E}_{s \sim s_0} \Big[ \tilde{V}^*(s) \Big] 
         = r(a) + [\bm{\Psi} \bm{\lambda}^*]_a + \tilde{V}^*(s) \\
@@ -157,7 +157,7 @@ At this point we are ready to describe the algorithm that we will use to solve t
     The proof follows the analysis of alg. \ref{alg:projEG}, which we do not re-state for brevity, so we just have to verify that the assumptions are satisfied:
     \begin{enumerate}
         \item we note that the function $f_\text{CIB-H}$ is concave-convex in $(\bm{r},\bm{\lambda},\bm{\pi})$ (where we just stack $\bm{r}$ and $\bm{\lambda}$ to have a saddle-point formulation),
-        \item we have that the domain on which the variables are defined is bounded by $D= \max\Big\{\sqrt{m},2R +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} \Big\} $ (from the definitions of the reward class $\mathcal{R}_{L_1}$, the fact that the policy in in the non-vanishing simplex is contained in the simplex and thus has diameter $<\sqrt{m}$ and using the result of proposition \ref{prop:bandit_strong_duality} to get the diameter of $\mathcal{B})$,
+        \item we have that the domain on which the variables are defined is bounded by $D= \max\Big\{\sqrt{m},2R +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} \Big\} $ (from the definitions of the reward class $\mathcal{R}_{L_1}$, the fact that the policy in in the non-vanishing simplex is contained in the simplex and thus has diameter $<\sqrt{m}$ and using the result of proposition \ref{prop:strong_duality} to get the diameter of $\mathcal{B})$,
         \item we known that the function $f_\text{CIB-H}$ is smooth with parameter \[m  \exp \Big(\frac{2\left(R + \beta \log{\left(m \right)}\right) \left(2  \|\Psi\| - \chi \gamma + \chi\right)}{\chi \left(1- \gamma\right)^{2}} \Big)\] from proposition \ref{prop:f_eg_cop_smooth}.
     \end{enumerate}
     Plugging those values into proposition $\ref{prop:proj_eg_smooth_convex_concave}$ gives us our convergence time. To verify that what is recovered is indeed correct we refer to proposition \ref{proposition:minmaxIRL} (which applies as the bandit case is simply a restriction of the generic IRL case). The choice of learning rate simply comes from the result of proposition \ref{prop:f_eg_cop_smooth} together with the required assumptions of proposition \ref{proposition:minmaxIRL}.

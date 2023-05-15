@@ -151,23 +151,9 @@ which provides a way of evaluating \ref{def:cib_sol_map} (this can be shown to b
     \end{aligned}
 \end{equation}
 where $f_\text{CIB}(\bm{r},\bm{\lambda},\bm{\pi}) = \langle \bm{r}, \bm{\pi}-\bm{\pi}^E \rangle -\Omega(\bm{\pi}) + \langle \bm{\lambda}, \bm{b}-\Psi \bm{\pi}\rangle$ is our objective function.
-\begin{proposition}
-    \label{prop:bandit_strong_duality}
-    (\textbf{Strong Duality}) Assuming that $\exists \bm{\pi}^E\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\lambda}^* \geq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\lambda}^*$. I.e. 
-    \begin{align*}
-        \text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\lambda}^*).
-    \end{align*}
-\end{proposition}
-\begin{proof}
-    Using generic Lagrangian Duality theory, we make two observations:
-    \begin{enumerate}
-        \item observe that the problem: $\max_{\bm{\pi} \in \mathcal{F}} \langle \bm{r}, \bm{\pi} \rangle - \Omega(\bm{\pi})$, is a \textbf{strictly convex optimization problem},
-        \item the primal optimum $\bm{\pi}^*$ is finite as the feasible set $\mathcal{F}$ is bounded and the objective is upper-bounded (since $\Omega$ is strictly convex).
-    \end{enumerate}
-    From Slater's condition it follows that strong duality holds.
-\end{proof}
+
 \noindent
-From proposition \ref{prop:bandit_strong_duality} we know that solving problem \ref{eq:dualConstrainedBanditIRL} is equivalent to solving \ref{eq:minmaxConstrainedBanditIRL}. We will study convergence of extra-gradient-based saddle-point algorithms on \ref{eq:dualConstrainedBanditIRL}. \\%Taking the same setup as in section \ref{sec:unconstrained_bandit_problem} ($\Omega(\bm{\pi}) = H_2(\bm{\pi})$, $\mathcal{R}=\mathcal{R}_{L_1})$, we can follow a very similar analysis. \\
+From proposition \ref{prop:strong_duality} we know that solving problem \ref{eq:dualConstrainedBanditIRL} is equivalent to solving \ref{eq:minmaxConstrainedBanditIRL}. We will study convergence of extra-gradient-based saddle-point algorithms on \ref{eq:dualConstrainedBanditIRL}. \\%Taking the same setup as in section \ref{sec:unconstrained_bandit_problem} ($\Omega(\bm{\pi}) = H_2(\bm{\pi})$, $\mathcal{R}=\mathcal{R}_{L_1})$, we can follow a very similar analysis. \\
 
 
 % \begin{proposition}

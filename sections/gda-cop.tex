@@ -58,7 +58,7 @@ The very large constant in front of the EG-COP algorithm's rate motivates the se
     The proof follows the analysis of alg. \ref{alg:projGDA}, which we do not re-state for brevity, so we just have to verify that the assumptions are satisfied:
     \begin{enumerate}
         \item we note that the function $f_\text{CIB-H}$ is concave-convex in $(\bm{r},\bm{\lambda},\bm{\pi})$ (where we just stack $\bm{r}$ and $\bm{\lambda}$ to have a saddle-point formulation),
-        \item we have that the domain on which the variables are defined is bounded by $D= \max\Big\{\sqrt{m},2R +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} \Big\} $ (from the definitions of the reward class $\mathcal{R}_{L_1}$, the fact that the policy in in the non-vanishing simplex is contained in the simplex and thus has diameter $<\sqrt{m}$ and using the result of proposition \ref{prop:bandit_strong_duality} to get the diameter of $\mathcal{B})$,
+        \item we have that the domain on which the variables are defined is bounded by $D= \max\Big\{\sqrt{m},2R +\frac{2(R +\beta \log m)}{\chi (1-\gamma)} \Big\} $ (from the definitions of the reward class $\mathcal{R}_{L_1}$, the fact that the policy in in the non-vanishing simplex is contained in the simplex and thus has diameter $<\sqrt{m}$ and using the result of proposition \ref{prop:strong_duality} to get the diameter of $\mathcal{B})$,
         \item we known that the function $f_\text{CIB-H}$ is Lipschitz with parameter \[
             \sqrt{m} 
             \Bigl( \log m +

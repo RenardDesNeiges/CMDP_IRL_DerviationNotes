@@ -11,7 +11,7 @@ Recall that from proposition \ref{proposition:minmaxIRL} we get that:
     \langle \bm{r}, \bm{\mu}-\bm{\mu}^E \rangle-\tilde{\Omega}(\bm{\mu}), \tag{p}
 \end{align*}
 
-which, we know by proposition \ref{prop:bandit_strong_duality} (\textbf{TODO, write out the non-bandit proof for strong duality}) is equivalent to:
+which, we know by proposition \ref{prop:strong_duality} is equivalent to:
 
 \begin{align*}
     \min_{\bm{r}\in\mathcal{R}, ~ \bm{\lambda}\succcurlyeq 0}\max_{\bm{\mu}\in\mathcal{M}} 
@@ -25,70 +25,45 @@ Problem $(d)$ is itself equivalent the following policy-form expression:
     J(\bm{\theta},\bm{w}) - J(\bm{\theta}^E,\bm{w}) + \langle \bm{\lambda},\bm{b}-\bm{K}(\bm{\theta}) \rangle, \tag{D}
 \end{align*}
 
-Where $\bm{w}$ parametrizes the reward function $\bm{r}:\mathbb{R}^d\rightarrow \mathcal{R}$ and $\bm{\theta}$ the policy function $\pi:\mathbb{R}^p \rightarrow \bm{\Pi}$. The objective function $J:\mathbb{R}^p \times \mathbb{R}^d \rightarrow \mathbb{R}$ is defined (as in definition \ref{def:obj_function}) as:
+Where $\bm{w}$ parametrizes the reward function $\bm{r}:\text{dom}(\bm{w}^d)\rightarrow \mathcal{R}$ and $\bm{\theta}$ the policy function $\pi:\mathbb{R}^p \rightarrow \bm{\Pi}$. Although $\bm{r}$ is a function of $\bm{w}$ and $\bm{\pi}$ is a function of $\bm{\theta}$ we choose for brevity to omit this from the notation. So by convention we have: $\bm{r} := \bm{r}(\bm{w})$ and $\bm{\pi}:= \bm{\pi}(\bm{\theta})$. Similarly we write $\bm{\mu}:=\text{OM}(\bm{\pi})$ to denote the occupancy measure associated with a certain parametrization/policy. The objective function $J:\mathbb{R}^p \times \mathbb{R}^d \rightarrow \mathbb{R}$ is defined (as in definition \ref{def:obj_function}) as:
 \begin{align*}
-    J(\bm{\theta},\bm{w}) := (1-\gamma) \mathbb{E}_{s \sim \text{OM}(\bm{\pi}_{\bm{\theta}})} \Big[ \sum_{t=0}^{+\infty}  \gamma^t \bigl( r_{\bm{w}}(s_t,a_t) - \beta \log \pi(a_t|s_t)\bigr) \Big| s_0 \sim \bm{\nu}, ~ a_t \sim \pi_{\bm{\theta}} \Big], 
+    J(\bm{\theta},\bm{w}) := (1-\gamma) \mathbb{E}_{s \sim \bm{\mu}} \Big[ \sum_{t=0}^{+\infty}  \gamma^t \bigl( r_{\bm{w}}(s_t,a_t) - \beta \log \pi(a_t|s_t)\bigr) \Big| s_0 \sim \bm{\nu}, ~ a_t \sim \pi_{\bm{\theta}} \Big], 
 \end{align*}
 and the cost function $\bm{K}:\mathbb{R}^p \rightarrow \mathbb{R}^c$ by:
 \begin{align*}
-    \bm{K}(\bm{\theta}) := (1-\gamma) \mathbb{E}_{s \sim \text{OM}(\bm{\pi}_{\bm{\theta}})} \Big[ \sum_{t=0}^{+\infty}  \gamma^t \bigl( \Psi(s_t,a_t) \bigr) \Big| s_0 \sim \bm{\nu} \Big].
+    \bm{K}(\bm{\theta}) := (1-\gamma) \mathbb{E}_{s \sim \bm{\mu}} \Big[ \sum_{t=0}^{+\infty}  \gamma^t \bigl( \Psi(s_t,a_t) \bigr) \Big| s_0 \sim \bm{\nu} \Big].
 \end{align*}
 
-For brevity we write problems $(d)$ and $(D)$ as:
+For brevity we write problem $(D)$ as:
 \begin{align*}
-    \min_{\bm{r}\in\mathcal{R}, ~ \bm{\lambda}\succcurlyeq 0}\max_{\bm{\mu}\in\mathcal{M}} 
-    g(\bm{r},\bm{\lambda},\bm{\mu}), \tag{d} \\
     \min_{\bm{w}\in\mathbb{R}^d, ~ \bm{\lambda}\succcurlyeq 0}\max_{\bm{\theta}\in\mathbb{R}^p} 
     f(\bm{w},\bm{\lambda},\bm{\theta}), \tag{D}
 \end{align*}
-respectively. From the properties of the maps $\text{OM}$ and $\text{PO}$ (see section \ref{sec:occupancy_measure}) and using proposition \ref{prop:bandit_strong_duality} we know that:
-\begin{align*}
-    f(\bm{w},\bm{\lambda},\bm{\theta}) = g(\bm{r}_{\bm{w}},\bm{\lambda},\text{OM}(\bm{\pi}_{\bm{\theta}})).
-\end{align*}
+respectively. 
 
-
-Solving the saddle point problem $(D)$ in parameter-space with GDA naturally yields algorithm \ref{alg:npg-cirl}. Which we are now going to try to analyze.
-
-\begin{algorithm}
-    \SetAlgoLined
-  \small
-    \caption{NPG-CIRL: Natural Policy Gradient CIRL (Exact Gradients)} 
-    \label{alg:npg-cirl}
-      Set the learning rate $0<\eta_\theta \leq \frac{1-\gamma}{\beta}$ \\
-      Initialize the algorithm at some point $(\bm{w}^{(0)},\bm{\lambda}^{(0)},\bm{\theta}^{(0)})$  \\
-      \ForEach{iteration $k = 0,2,...,K-1$}{
-            $\bm{w}^{(k)} \leftarrow \Pi_{\text{dom}(\bm{w})}\bigl( 
-                \bm{r}_k - \eta_{w} \nabla_{\bm{w}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)})    
-            \bigr) $ \\
-            $\bm{\lambda}^{(k+1)} \leftarrow \Pi_{\bm{\lambda} \in \mathcal{B}} \big(\bm{\lambda}^{(k)} - \eta_{\lambda} \nabla_{\bm{\lambda}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)}) \big) $ \\
-            $\bm{\theta}^{(k+1)} \leftarrow  \bm{\theta}^{(k)} + \eta_\theta (\mathfrak{F}^{\bm{\theta}})^\dagger \nabla_{\bm{\theta}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)})  $ \\
-      }
-      return $(\bm{w}^{(K)},\bm{\lambda}^{(K)},\bm{\theta}^{(K)})$.
-  \end{algorithm}
-
-\subsection{Policy and reward Parametrization}
+\subsection{Policy and Reward Parametrization and Update Rules}
 
 We will specifically study convergence of our algorithm when the \textbf{policy} is \textit{softmax} parameterized, recall that the \textit{softmax} transform $\text{softmax}:\mathbb{R}^n\rightarrow \Delta_{n-1}$ is given by:
 \begin{align*}
     \big[\text{softmax}(\bm{\theta})\big]_i := \frac{\exp \bm{\theta}_i}{\sum_{j\in[n]} \exp(\bm{\theta}_j)}.
 \end{align*}
+\noindent
+Or specifically, when considering policies, we write $ \pi_{\bm{\theta}} (a|s) := \big[\text{softmax}(\bm{\theta})\big]_{s,a}$.
+% \begin{align*}
+%     \pi_{\bm{\theta}} (a|s) := \big[\text{softmax}(\bm{\theta})\big]_{s,a} =  \frac{\exp \theta(s,a)}{\sum_{a'\in A} \exp(\theta(s,a'))}. 
+% \end{align*}
 
-Or specifically, when considering policies, we write:
-\begin{align*}
-    \pi_{\bm{\theta}} (a|s) := \big[\text{softmax}(\bm{\theta})\big]_{s,a} =  \frac{\exp \theta(s,a)}{\sum_{a'\in A} \exp(\theta(s,a'))}. 
-\end{align*}
-
-Here is is worth mentioning a cool property which we will make use of in our derivations:
-\begin{align*}
-    \nabla_{\bm{\theta}} \log \big( \| \exp \bm{\theta} \|_1 \big) = \frac{\exp \bm{\theta} }{\| \exp \bm{\theta}\|_1} = \text{softmax}(\bm{\theta}) = \bm{\pi}_{\bm{\theta}}.
-\end{align*}
+% Here is is worth mentioning a cool property which we will make use of in our derivations:
+% \begin{align*}
+%     \nabla_{\bm{\theta}} \log \big( \| \exp \bm{\theta} \|_1 \big) = \frac{\exp \bm{\theta} }{\| \exp \bm{\theta}\|_1} = \text{softmax}(\bm{\theta}) = \bm{\pi}_{\bm{\theta}}.
+% \end{align*}
 
 We will first limit our study to linear reward classes of the form:
 \begin{align*}
-    \bm{r}_{\bm{w}} = \Big\{ \capricornus \bm{w} \Big| \bm{w}  \in \mathbb{R}^d ;~ \| \capricornus \bm{w} \|_P \leq 1 \Big\},
+    \bm{r}_{\bm{w}} = \Big\{ \Phi \bm{w} \Big| \bm{w}  \in \mathbb{R}^d ;~ \| \Phi \bm{w} \|_P \leq 1 \Big\},
 \end{align*}
 
-where $\capricornus \in \mathbb{R}^{nm \times d}$ defines a linear space and $P$ defines a ball of $l_P$ norms in which we know the reward is contained. The simplest possible reward class is given by taking $\capricornus = I^{nm\times nm}$ together with $P=1$.
+where $\Phi \in \mathbb{R}^{nm \times d}$ defines a linear space and $P$ defines a ball of $l_P$ norms in which we know the reward is contained. The simplest possible reward class is given by taking $\Phi = I^{nm\times nm}$ together with $P=1$.
 
 
 \subsubsection{Primal Step: Natural Policy Gradients reduces to Multiplicative Weights Update} 
@@ -101,6 +76,7 @@ where $\capricornus \in \mathbb{R}^{nm \times d}$ defines a linear space and $P$
         &= \frac{1}{Z^{(t)}(s)}\big(\pi^{(t)}(a|s)\big)^{(1-\eta_\theta \beta)} \exp\bigl( \eta_\theta Q_{\tilde{r}}^{\pi^{(t)}} (s,a)  \bigr), \\
         &= \frac{1}{Z^{(t)}(s)}\big(\pi^{(t)}(a|s)\big)^{(1-\eta_\theta \beta)} \exp\bigl( \eta_\theta(Q^\pi(s,a) - \langle \bm{\lambda}, \bm{Q}_\Psi^\pi(s,a) \rangle )  \bigr).
     \end{align*}
+    Where $Z^(t)$ normalizes each state in such a way that $\bm{\pi}\in\Pi$.
 \end{lemma}
 \begin{proof}
     
@@ -215,7 +191,7 @@ As in most global convergence analysis of policy-gradient related algorithm we n
 \end{lemma}
 
 \begin{proof}
-    It's secret!
+    It's secret! \text{TODO decide whether I want to include it or just cite Cen 21}
 \end{proof}
 
 
@@ -259,17 +235,51 @@ As in most global convergence analysis of policy-gradient related algorithm we n
 
 
 \begin{proof}
-    It's a surprise for later!
+    It's a surprise for later! \text{TODO decide whether I want to include it or just cite Cen 21}
 \end{proof}
 
+\text{TODO: Include the result that Soft Policy Iteration implements the soft Bellman operator.}
 
-\subsection{Analysis the NPG-CIRL algorithm}
+\subsection{The NPG-CIRL algorithm}
+Solving the saddle point problem $(D)$ in parameter-space, using natural gradients, naturally yields algorithm \ref{alg:npg-cirl}. Which we are now going to try to analyze.
+
+\begin{algorithm}
+    \SetAlgoLined
+  \small
+    \caption{NPG-CIRL: Natural Policy Gradient CIRL (Exact Gradients)} 
+    \label{alg:npg-cirl}
+      Set the learning rate $0<\eta_\theta \leq \frac{1-\gamma}{\beta}$ \\
+      Initialize the algorithm at some point $(\bm{w}^{(0)},\bm{\lambda}^{(0)},\bm{\theta}^{(0)})$  \\
+      \ForEach{iteration $k = 0,2,...,K-1$}{
+            $\bm{w}^{(k)} \leftarrow \Pi_{\text{dom}(\bm{w})}\bigl( 
+                \bm{r}_k - \eta_{w} \nabla_{\bm{w}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)})    
+            \bigr) $ \\
+            $\bm{\lambda}^{(k+1)} \leftarrow \Pi_{\bm{\lambda} \in \mathcal{B}} \big(\bm{\lambda}^{(k)} - \eta_{\lambda} \nabla_{\bm{\lambda}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)}) \big) $ \\
+            $\bm{\theta}^{(k+1)} \leftarrow  \bm{\theta}^{(k)} + \eta_\theta (\mathfrak{F}^{\bm{\theta}})^\dagger \nabla_{\bm{\theta}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)})  $ \\
+      }
+      return $(\bm{w}^{(K)},\bm{\lambda}^{(K)},\bm{\theta}^{(K)})$.
+  \end{algorithm}
+
+\subsection{Analysis of NPG-CIRL}
 
 We now enter the analysis section of the algorithm. Our analysis hinges on two main results:
 \begin{enumerate}
     \item the algorithm converges fast to a locally optimal policy $\tilde{\pi}$, which we show in section \ref{sec:NPG_CIRL_fast_conv_local_optimal},
     \item this convergence results allows us to analyze the global convergence of the algorithm, which we do in section  \ref{sec:NPG_CIRL_global_convergence}.
 \end{enumerate}
+
+We will show that the following theorem is true:
+\begin{theorem}
+    \label{thm:global_conv_npg_cirl}
+    Considering a CIRL problem (as defined in \ref{def:CIRL_solmap}) satisfying assumption \ref{assumption:realizability}, where the reward parametrization satisfies assumption \ref{assumption:bounded_reward_grads}, we have that the duality gap $f(\bm{z}^{(t)},\bm{\theta}^{(t)}) - f^*$ goes converges to an $\epsilon$ error in finite time with the following rate:
+    \begin{align*}
+        \frac{1}{T} \sum_{t=0}^{T-1} f(\bm{z}^{(t)},\bm{\theta}^{(t)}) - f^* 
+        &\leq C_\text{NPG-CIRL} T^{-1/4},
+    \end{align*}
+    where, 
+    \[C_\text{NPG-CIRL} = 2\Bigg(\frac{D^{(0)} }{2} +\frac{\eta B_{\bm{z}}^2}{2} + \frac{2 \sqrt{n C_\pi}  (D_z B_a+B_b)}{1 - \gamma}
+    \Bigg).\]
+\end{theorem}
 
 \subsubsection{Fast convergence to a locally optimal policy}
 \label{sec:NPG_CIRL_fast_conv_local_optimal}
@@ -287,14 +297,15 @@ For convenience we write $\tilde{\bm{r}}^{(t)} = \bm{r}^{(t)} - \Psi \bm{\lambda
             \|\bm{Q}^{(t)}_{\tilde{\bm{r}}^{(t)}}
         - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty 
         \leq
-        \frac{2 L_q B_w}{T^u} +
+        \frac{2(2 B_w^2+\|\Psi\|^2)}{(1 - \gamma)T^u}
+        +
         \frac{\gamma 
         \|\bm{Q}^{(0)}_{\tilde{\bm{r}}^{(t)}}
         - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty
-        }{T}, \\
+        }{T},\\
         \| \log \bm{\pi}^{(t+1)} - \log \tilde{\bm{\pi}}^{(t)} \|_\infty 
         \leq
-        \frac{4 L_q B_w}{T^u} +
+        \frac{4(2 B_w^2+\|\Psi\|^2)}{(1 - \gamma)T^u} +
         \frac{2 \gamma 
         \|\bm{Q}^{(0)}_{\tilde{\bm{r}}^{(t)}}
         - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty
@@ -302,6 +313,28 @@ For convenience we write $\tilde{\bm{r}}^{(t)} = \bm{r}^{(t)} - \Psi \bm{\lambda
     \end{align*}
 \end{lemma}
 
+Note that since $u\in(0,1)$ we have that:
+\begin{align*}
+    \| \log \bm{\pi}^{(t+1)} - \log \tilde{\bm{\pi}}^{(t)} \|_\infty 
+    &\leq
+    \frac{4(2 B_w^2+\|\Psi\|^2)}{(1 - \gamma)T^u} +
+    \frac{2 \gamma 
+    \|\bm{Q}^{(0)}_{\tilde{\bm{r}}^{(t)}}
+    - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty
+    }{T},\\
+    &\leq
+    \Bigg(
+    \frac{4(2 B_w^2+\|\Psi\|^2)}{(1 - \gamma)} + 2 \gamma 
+    \|\bm{Q}^{(0)}_{\tilde{\bm{r}}^{(t)}}
+    - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty
+    \Bigg)
+    \frac{1}{T^u},\\
+    &\leq
+    C_\pi
+    \frac{1}{T^u},
+\end{align*}
+where $C_\pi=\frac{4(2 B_w^2+\|\Psi\|^2)}{(1 - \gamma)} + 2 \gamma \|\bm{Q}^{(0)}_{\tilde{\bm{r}}^{(t)}}
+- \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty$, which allows for a slightly more digest notation.
 \begin{proof}
     We will track the log-error of the policy $\bm{\pi}^{(t+1)}$ generated by algorithm \ref{alg:npg-cirl} w.r.t to $\tilde{\bm{\pi}}^{(t)}$ :
 \begin{align*}
@@ -386,15 +419,15 @@ We start with $(A)$, using lemma \ref{lemma:optQ_is_lipschitz_wrt_w} we get:
 \[
     \|  \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} 
     - \bm{Q}^*_{\tilde{\bm{r}}^{(t-1)}} 
-    \|_\infty \leq
-    L_q \|\bm{w}^{(t)} - \bm{w}^{(t-1)} \|_2.
+    \|_\infty 
+    \leq \frac{B_w}{1 - \gamma} \| \bm{w}_1 - \bm{w}_2 \|_2 + \frac{\|\Psi\|}{1 - \gamma} \| \bm{\lambda}_1 - \bm{\lambda}_2 \|_2.
 \]
 Moving on to $(C)$ we can similarily use lemma \ref{lemma:sameQ_is_lipschitz_wrt_w} and get:
 \[
-    \bm{Q}^{t}_{\tilde{\bm{r}}^{(t-1)}} 
+    \| \bm{Q}^{t}_{\tilde{\bm{r}}^{(t-1)}} 
     - \bm{Q}^*_{\tilde{\bm{r}}^{(t-1)}} 
-    \|_\infty    \leq
-    L_q \|\bm{w}^{(t)} - \bm{w}^{(t-1)} \|_2.
+    \|_\infty   
+    \leq \frac{B_w}{1 - \gamma} \| \bm{w}_1 - \bm{w}_2 \|_2 + \frac{\|\Psi\|}{1 - \gamma} \| \bm{\lambda}_1 - \bm{\lambda}_2 \|_2.
 \]
 This leaves $(B)$, for which we will use the contraction property of the soft Bellman operator. Recall that SPI gives:
 \begin{align*}
@@ -430,43 +463,52 @@ Using the bounds for $(A)$, $(B)$ and $(C)$ we get that:
 \begin{align*}
     \|\bm{Q}^{(t)}_{\tilde{\bm{r}}^{(t)}}- \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty 
     \leq
-    2 L_q \| \bm{w}^{(t)} - \bm{w}^{(t-1)} \|_2 + \gamma
+    \frac{2B_w}{1 - \gamma} \| \bm{w}^{(t)} - \bm{w}^{(t-1)} \|_2 +
+    \frac{2\|\Psi\|}{1 - \gamma} \| \bm{\lambda}^{(t)} - \bm{\lambda}^{(t-1)} \|_2 
+    \\+ \gamma
     \|  
     \bm{Q}^{(t-1)}_{\tilde{\bm{r}}^{(t-1)}}  
     -  \bm{Q}^*_{\tilde{\bm{r}}^{(t-1)}} 
     \|_\infty.
 \end{align*}
 
-By lemma \ref{lemma:f_lipschitz_wrt_rew_params} we know that :
+By claim \ref{claim:f_lipschitz_wrt_rew_params} we know that :
 \begin{align*}
-    2 L_q \| \bm{w}^{(t)} - \bm{w}^{(t-1)} \|_2 &= 
-    \| \eta_w \nabla_{\bm{w}} f(\bm{w},\bm{\lambda},\bm{\theta}) \|_2\\
+    \frac{2B_w}{1 - \gamma} 
+    \overbrace{\| \bm{w}^{(t)} - \bm{w}^{(t-1)} \|_2}^{
+        \leq\eta_w 2B_w
+    }
+    +
+    \frac{2\|\Psi\|}{1 - \gamma}
+    \overbrace{\| \bm{\lambda}^{(t)} - \bm{\lambda}^{(t-1)} \|_2}^{
+        \leq \eta_\lambda\|\Psi\|
+    }
     &\leq 
-    2 L_q \eta_w B_w.
+    \frac{2(2\eta_w B_w^2+\eta_\lambda\|\Psi\|^2)}{1 - \gamma} 
 \end{align*}
 
 Thus we are equipped to complete our analysis of local convergence, for convenience we pose $H^{(t)} := \|\bm{Q}^{(t)}_{\tilde{\bm{r}}^{(t)}}- \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty$, our descent inequality is of the form:
 \begin{align*}
-    H^{(t)} \leq 2 L_q \eta_w B_w + \gamma H^{(t-1)}.
+    H^{(t)} \leq\frac{2(2\eta_w B_w^2+\eta_\lambda\|\Psi\|^2)}{1 - \gamma}  + \gamma H^{(t-1)}.
 \end{align*}
 
 Averaging we get:
 \begin{align*}
    \frac{1}{T} \sum^{T}_{t=1} H^{(t)} \leq
-   \frac{1}{T} \sum^{T-1}_{t=0} 2 L_q \eta_w B_w + \gamma H^{(t-1)}.
+   \frac{1}{T} \sum^{T-1}_{t=0} \frac{2(2\eta_w B_w^2+\eta_\lambda\|\Psi\|^2)}{1 - \gamma} + \gamma H^{(t-1)}.
 \end{align*}
 Which can be rearranged into :
 \begin{align*}
    \frac{1-\gamma}{T} \sum^{T}_{t=1} H^{(t)} 
    &\leq
-   2 L_q \eta_w B_w +
+   \frac{2(2\eta_w B_w^2+\eta_\lambda\|\Psi\|^2)}{1 - \gamma}  +
    \frac{\gamma}{T} (H^{(0)}-H^{(t)})\\
    &\leq
-   2 L_q \eta_w B_w +
+   \frac{2(2\eta_w B_w^2+\eta_\lambda\|\Psi\|^2)}{1 - \gamma}  +
    \frac{\gamma H^{(0)}}{T}.
 \end{align*}
 
-Picking $\eta_{{w}}= \frac{1}{K^u}$ where $u\in (0,1)$ we get the following convergence rate in $Q$ values:
+Picking $\eta_{{w}}=\eta_{{\lambda}}= \frac{1}{K^u}$ where $u\in (0,1)$ we get the following convergence rate in $Q$ values:
 \begin{align*}
     \|\bm{Q}^{(t)}_{\tilde{\bm{r}}^{(t)}}
     - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty 
@@ -474,8 +516,9 @@ Picking $\eta_{{w}}= \frac{1}{K^u}$ where $u\in (0,1)$ we get the following conv
     \frac{1-\gamma}{T} \sum^{T}_{t=1}   
     \|\bm{Q}^{(t)}_{\tilde{\bm{r}}^{(t)}}
     - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty
-    \leq
-    \frac{2 L_q B_w}{T^u} +
+    \leq\\
+    \frac{2(2 B_w^2+\|\Psi\|^2)}{(1 - \gamma)T^u}
+    +
     \frac{\gamma 
     \|\bm{Q}^{(0)}_{\tilde{\bm{r}}^{(t)}}
     - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty
@@ -486,9 +529,9 @@ which immediately gives an upper bound on the log-policy error by:
     \| \log \bm{\pi}^{(t+1)} - \log \tilde{\bm{\pi}}^{(t)} \|_\infty 
     \leq 2
     \|\bm{Q}^{(t)}_{\tilde{\bm{r}}^{(t)}}
-    - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty 
+    - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty \\
     \leq
-    \frac{4 L_q B_w}{T^u} +
+    \frac{4(2 B_w^2+\|\Psi\|^2)}{(1 - \gamma)T^u} +
     \frac{2 \gamma 
     \|\bm{Q}^{(0)}_{\tilde{\bm{r}}^{(t)}}
     - \bm{Q}^*_{\tilde{\bm{r}}^{(t)}} \|_\infty
@@ -501,7 +544,8 @@ which immediately gives an upper bound on the log-policy error by:
 \subsubsection{Global convergence}
 \label{sec:NPG_CIRL_global_convergence}
 % As suggested by \cite{Zeng2022} we are going to make our analysis hinge on the fact that convergence of the NPG policy gradient algorithm can be expected to be much faster (specifically we know that it converges at a linear rate) than convergence of the Lagrange multiplier and reward approximation steps. \\
-In order to study the convergence of $f(\bm{w},\bm{\lambda},\bm{\theta})$  we will look at the convergence of gradient descent on the function  $\tilde{f}(\bm{w},\bm{\lambda}) := f(\bm{w},\bm{\lambda},\tilde{\bm{\theta}})$, where $\tilde{\bm{\theta}} = \arg \max_{\bm{\theta}} f(\bm{w},\bm{\lambda},\bm{\theta})$ for readability we define $\bm{z} := [\bm{\lambda},\bm{w}]^T$, $\bm{Z}=\mathcal{B}\times \text{dom}(w)$ and write $\tilde{f}(\bm{z}) = \tilde{f}(\bm{\lambda},\bm{w})$ and $Z=\text{dom}(\bm{w})\times\mathcal{B}$. The main idea behind our analysis is to study convergence of the problem:
+\begin{proof}
+    (of theorem \ref{thm:global_conv_npg_cirl}) In order to study the convergence of $f(\bm{w},\bm{\lambda},\bm{\theta})$  we will look at the convergence of gradient descent on the function  $\tilde{f}(\bm{w},\bm{\lambda}) := f(\bm{w},\bm{\lambda},\tilde{\bm{\theta}})$, where $\tilde{\bm{\theta}} = \arg \max_{\bm{\theta}} f(\bm{w},\bm{\lambda},\bm{\theta})$ for readability we define $\bm{z} := [\bm{\lambda},\bm{w}]^T$, $\bm{Z}=\mathcal{B}\times \text{dom}(w)$ and write $\tilde{f}(\bm{z}) = \tilde{f}(\bm{\lambda},\bm{w})$ and $Z=\text{dom}(\bm{w})\times\mathcal{B}$. The main idea behind our analysis is to study convergence of the problem:
 \begin{align*}
     &\min_{\bm{z}\in\bm{Z}} \tilde{f}(\bm{z}) \tag{R}\\
     =&\min_{\bm{z}\in\bm{Z}} \Big(  \max_{\bm{\theta}} {f}(\bm{z},\bm{\theta}) \Big),
@@ -703,5 +747,7 @@ Summing and dividing by $\frac{1}{K}$ on both sides we have:
         &\leq   \frac{1}{2\eta T} D^{(0)} 
         +\frac{\eta B_{\bm{z}}^2}{2} 
             + \frac{2 \sqrt{n C_\pi}  (D_z B_a+B_b)}{1 - \gamma}
-            \frac{T^{1-u/2}}{1-u/2}
+            \frac{T^{1-u/2}}{1-u/2}.
 \end{align*}
+A well chosen $u$ finishes the proof.
+\end{proof}
