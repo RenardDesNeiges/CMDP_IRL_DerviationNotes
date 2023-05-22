@@ -44,17 +44,17 @@
             & = \sum_{s\in S} \frac{1}{2} \| \bm{\pi} (\cdot|s) 
             - \bar{\bm{\pi}} (\cdot|s) \|_1^2 
             && (a+b)^2 \leq 2(a^2+b^2) \\
-            & = \sum_{s\in S} D_\text{KL}( \bm{\pi} (\cdot|s) 
+            & \leq \sum_{s\in S} D_\text{KL}( \bm{\pi} (\cdot|s) 
             || \bar{\bm{\pi}} (\cdot|s) )
             && \frac{1}{2} \|\bm{p}_1 - \bm{p}_2 \|_1^2 \leq D(\bm{p}_1||\bm{p}_2) \\
-            & = \sum_{s\in S} | \bm{\pi}^T (  \log \bm{\pi} - \log \bar{\bm{\pi}} )  |
+            & = \sum_{s\in S} | \bm{\pi}(\cdot|s)^T (  \log \bm{\pi}(\cdot|s) - \log \bar{\bm{\pi}}(\cdot|s) )  |
             && \text{def. of KL}\\
             & \leq \sum_{s\in S} 
-            \overbrace{\| \bm{\pi} \|_1 }^{=1}
-            \cdot \|  \log \bm{\pi} - \log \bar{\bm{\pi}} \|_\infty  
+            \overbrace{\| \bm{\pi} (\cdot|s) \|_1 }^{=1}
+            \cdot \|  \log \bm{\pi} (\cdot|s) - \log \bar{\bm{\pi}} (\cdot|s) \|_\infty  
             && \text{Hödler's ineq.}\\
             & \leq \sum_{s\in S} 
-             \|  \log \bm{\pi} - \log \bar{\bm{\pi}} \|_\infty  
+             \|  \log \bm{\pi} (\cdot|s) - \log \bar{\bm{\pi}} (\cdot|s) \|_\infty  
             && \\
             & \leq 
             n \cdot
@@ -279,6 +279,15 @@
         \end{align*}
         Which completes the proof. (The bound established for any state action pair trivially bounds the $\|\cdot\|_\infty$ norm.)
     \end{proof}
+\end{lemma}
+
+\begin{lemma}[Soft suboptimality]
+    \label{lem:soft_suboptimality}
+    Consider an SPI step ($\eta_\theta=\frac{1}{\beta}$), and one has:
+    \begin{align*}
+        \tilde{f}(\bm{w},\bm{\lambda}) - {f}(\bm{w},\bm{\lambda},\bm{\theta}^{(t)}) \leq \frac{1}{\eta_\theta} \mathbb{E}_{s \sim \tilde{\bm{\mu}}} \Bigg[ \text{D}_\text{KL}\Big( \bm{\pi}^{(t)}(\cdot|s) || \bm{\pi}^{(t+1)}(\cdot|s) \Big) \Bigg].
+    \end{align*}
+    Refer to \cite{Mei2020} for proof.
 \end{lemma}
 
 \begin{lemma}[$Q$-values are Lipschitz in reward and Lagrange parameters for fixed policy]

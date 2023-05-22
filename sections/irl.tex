@@ -77,9 +77,9 @@ The goal of the IRL problem is to recover a reward $\hat{\bm{r}}$ s.t. the exper
     
 \end{proof}
 
-\begin{proposition}
+\begin{proposition}[Strong Duality]
     \label{prop:strong_duality}
-    (\textbf{Strong Duality}) Assuming that $\exists \bm{\pi}^E\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\lambda}^* \geq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\lambda}^*$. I.e. 
+    Assuming that $\exists \bm{\pi}^E\in\mathcal{F}$, and that $\text{obj}$ is strictly convex. Then dual optimum is attained for some $\bm{\lambda}^* \geq 0$ and problem \ref{eq:minmaxConstrainedBanditIRL} is equivalent to an unconstrained bandit problem with reward $\bm{r}-\Psi \bm{\lambda}^*$. I.e. 
     \begin{align*}
         \text{CRL}_\pi(\bm{r}) = \text{RL}_\pi(\bm{r} - \bm{\Psi} \bm{\lambda}^*).
     \end{align*}
@@ -92,3 +92,13 @@ The goal of the IRL problem is to recover a reward $\hat{\bm{r}}$ s.t. the exper
     \end{enumerate}
     From Slater's condition it follows that strong duality holds.
 \end{proof}
+
+\begin{definition}[Diminished Reward]
+    \label{def:diminished_reward}
+    We call diminished reward the function $\tilde{r}:S \times A\rightarrow \mathcal{R}$ defined as:
+    \begin{align*}
+        \tilde{\bm{r}} = \bm{r} - \bm{\Psi} \bm{\lambda}, \\
+        \tilde{{r}}(s,a) = \bm{r}(s,a) - \langle \bm{\Psi}(s,a),\bm{\lambda}(s,a)\rangle, \\
+    \end{align*}
+    this definition provides a shorthand for making use of strong duality (proposition \ref{prop:strong_duality}) in the analysis of CIRL convergence.
+\end{definition}
