@@ -1,0 +1,500 @@
+In the following section we discuss the generalization of results to the situation in which we only have access to inexact gradients. More specifically, \\
+
+\textbf{discuss the dataset and simulation access}\\
+
+The stochastic generalization of our algorithm thus takes the form of alg \ref{alg:npg-stoch}.
+
+\begin{algorithm}
+    \SetAlgoLined
+  \small
+    \caption{NPG-CIRL: Natural Policy Gradient CIRL (Sampled Gradients)} 
+    \label{alg:npg-stoch}
+      Set the learning rates $\eta_\theta = \frac{1}{\beta}$, $\eta_z = \frac{1}{T^u}$ \\
+      Initialize the algorithm at some point $(\bm{w}^{(0)},\bm{\lambda}^{(0)},\bm{\theta}^{(0)})$  \\
+      Compute the feature expectation $\hat{\bm{\Upsilon}}_H$ from the expert dataset $D^E$.\\
+      \For{iteration $t = 1,2,...,T$}{
+            Sample a batch of trajectories.\\
+            \For{batch $i = 1,2,...,B$}{
+                draw $s_0^{(i)} \sim \nu_0$ \\
+                \For{step $k=1,...K$}{
+                    pick $a_{k-1}^{(i)} \sim \pi(\cdot|s_{k-1}^{(i)},\bm{\theta}_t)$ \\
+                    draw $s_{k}^{(i)} \sim P(s_k^{(i)}|s_{k-1}^{(i)},a_{k-1}^{(i)})$ \\
+                    $r_{k}^{(i)} \leftarrow r(s_{k}^{i},a_{k}^{i})$ \\
+                    $\bm{k}_{k}^{(i)} \leftarrow \bm{k}(s_{k}^{i},a_{k}^{i})$ \\
+                }
+            }
+            Update the gradient estimates using the trajectories $\big\{ \{ s_{k}^{i},a_{k}^{i},r_{k}^{i}, \bm{k}_{k}^{(i)}\}_{k=1}^K \big\}_{i=1}^B$.\\
+            Compute the reward gradient estimate $\hat{\bm{g}}_w \leftarrow \hat{\nabla}_{\bm{w}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)}) $\\
+            Compute the Lagrangian gradient estimate $\hat{\bm{g}}_\lambda \leftarrow \nabla_{\bm{\lambda}}   f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)})$\\
+            Compute the policy gradient estimate $\hat{\bm{g}}_\theta \leftarrow \hat{\nabla}_{\bm{\theta}} f(\bm{w}^{(k)},\bm{\lambda}^{(k)},\bm{\theta}^{(k)})$\\
+            $\bm{w}^{(k)} \leftarrow \Pi_{\text{dom}(\bm{w})}\bigl( \bm{r}_k - \eta_{z} \hat{\bm{g}}_w \bigr) $ \\
+            $\bm{\lambda}^{(k+1)} \leftarrow \Pi_{\bm{\lambda} \in \mathcal{B}} \big(\bm{\lambda}^{(k)} - \eta_{z} \hat{\bm{g}}_\lambda  \big) $ \\
+            $\bm{\theta}^{(k+1)} \leftarrow  \bm{\theta}^{(k)} + \eta_\theta (\mathfrak{F}^{\bm{\theta}})^\dagger \hat{\bm{g}}_\theta $ \\
+      }
+
+      return $(\bm{w}^{(K)},\bm{\lambda}^{(K)},\bm{\theta}^{(K)})$.
+  \end{algorithm}
+
+  \begin{enumerate}
+    \item What gradient estimator do we use for the NPG steps?
+    \begin{enumerate}
+        \item Monte-Carlo (GOMDP) ?
+        \item TD (Actor-Critic)?
+    \end{enumerate}
+    \item What gradient estimator do we use for the reward gradient estimate ?  $\nabla_{\bm{w}} f(\bm{w},\bm{\lambda},{\bm{\theta}}) = (\bm{\mu}-\bm{\mu}^E) \frac{\partial \bm{r}}{\partial \bm{w}}$ using a feature expectation Monte-Carlo estimator.
+    \item What gradient estimator do we use for the Lagrangian gradient estimate ?  $\nabla_{\bm{\lambda}} f(\bm{w},\bm{\lambda},{\bm{\theta}}) =  (\bm{b}-\bm{K}(\bm{\theta}))$ the fastest convergence probably would be TD on $\bm{K}$.
+  \end{enumerate}
+
+  And most importantly, how do we tie all of this together? Probably the same way as in the non-noisy case, but the proof will be long.....
+
+
+\subsection{Dealing with perturbed gradients, a step towards showing robust convergence}
+
+Most practical gradient estimators introduce some kind of bias, Most often as a consequence of the truncation of the infinite sum in the expected discounted reward that necessarily occurs when sampling a finite time horizon:
+\begin{align*}
+    \hat{J} - J =  
+    \frac{1}{B}
+        \sum_{t=1}^{B}  
+        \sum_{t=0}^{H-1}  
+        \gamma^t r(s_t,a_t) -
+        \mathbb{E}\Bigg[
+        \sum_{t=0}^{+\infty}  
+        \gamma^t r(s_t,a_t)
+    \Bigg] ,\\
+    \mathbb{E}\big[\hat{J}-J\big] = \mathbb{E}\Bigg[ 
+        \frac{1}{B}
+         \sum_{t=1}^{B}  
+        \sum_{t=0}^{H-1}  
+        \gamma^t r(s_t,a_t) -
+            \mathbb{E}\Big[
+                \sum_{t=0}^{+\infty}  
+                \gamma^t r(s_t,a_t)
+            \Big]
+        \Bigg],  \\
+    =\mathbb{E}\Bigg[ 
+        \sum_{t=0}^{H-1}  
+        \gamma^t (r(s_t,a_t) - r(s_t,a_t) )
+        -
+        \sum_{t=H}^{+\infty}  
+        \gamma^t r(s_t,a_t)
+        \Bigg] 
+        =
+        -
+        \mathbb{E}\Bigg[ 
+        \sum_{t=H}^{+\infty}  
+        \gamma^t r(s_t,a_t)
+        \Bigg].
+\end{align*}
+
+This bias can actually be eliminated (by choosing randomly sampled horizon length, as proposed and analyzed in \cite{DingY2021}), but since getting an unbiased estimator comes at a high sample complexity cost, it makes more sense (if possible) to show that the optimization procedure is robust to small biases, which is what we will show next. \\
+
+\noindent
+Showing our result will take a few assumptions:
+
+\begin{assumption}[Bounded variance gradient estimator]
+    \label{assumption:bounded_var_grad_est}
+    \[ \mathbb{E}\Big[ \| \hat{\nabla}_\theta f - {\nabla}_\theta f  \|_2^2 \Big] \leq \sigma^2 \]
+\end{assumption}
+
+\begin{assumption}[Bounded bia gradient estimator]
+    \label{assumption:bounded_bias_grad_est}
+    \[  \| \mathbb{E}\big[ \hat{\nabla}_\theta f \big]- {\nabla}_\theta f  \|_2 \leq \delta \]
+\end{assumption}
+
+\subsection{Impact of inexact (perturbed) gradients on the NPG updates}
+
+In an attempt to work out some robustness guarantee that convergence is still fast with biased gradients (as in assumption \ref{assumption:bounded_bias_grad_est}) we first analyze the convergence with \textbf{deterministic gradients subject bounded  perturbation} (which hopefully smoothly will translate into a biased stochastic gradient analysis). 
+
+\begin{assumption}[Bounded perturbation determinsitic gradient estimator]
+    \label{assumption:bounded_pert_grad}
+    \[ \| \breve{\nabla}_\theta f - {\nabla}_\theta f  \|_2 \leq \delta_p \]
+\end{assumption}
+
+\begin{lemma}[Impact of perturbed gradient on policy updates]
+    \label{lemma:perturbed_policy_updates}
+    Using perturbed gradients of the form $\breve{\nabla}_\theta f = {\nabla}_\theta f + \delta_p$ yields updates of the form:
+    \[\pi^{(t+1)}(a|s)  = \big(\pi^{(t)}(a|s) \big)^{1-\eta \beta} \exp \Bigl( \eta \bigl( {Q}_{\tilde{r}^{(t)}}^{(t)}   + \delta_\mathcal{F}^{(t)} \bigr) \Bigr), \]
+    where $\delta_\mathcal{F}:=\bigl(\mathcal{F}^{\theta^{(t)}}\bigr)^\dagger \delta_b^{(t)}$, this opens the possibility for the convenient notation:
+    \[ \breve{Q}_{\tilde{r}^{(t)}}^{(t)}  := {Q}_{\tilde{r}^{(t)}}^{(t)}   + \delta_\mathcal{F}^{(t)}.\]
+    \begin{proof}
+        Essentially as \ref{lem:MWU_Step}.
+    \end{proof}
+\end{lemma}
+
+\subsubsection{Three interdependent sequences to show convergence}
+
+Inspired by the linear inequality system analysis developed for the entropy regularized NPG algorithm in \cite{Cen2021} we write out a set of inequalities of our own to analyze the robustness of our algorithm. We let: \[\alpha=1-\eta\beta\] and define a well-chose auxiliary sequence $\big\{\bm{\xi}^{(t)}\big\}_{t=0}^{T-1}$ recursively as follows,:
+\begin{align}
+    \label{eq:aux_seq_init}
+    \bm{\xi}^{(0)}(s,a) := \|\bm{Q}^*_{\tilde{r}^{(t)}}(s,\cdot)/\beta\|_1 \cdot \pi^{0}(a|s) \\
+    \label{eq:aux_seq_step}
+    \bm{\xi}^{(t+1)}(s,a) := \bigl(\bm{\xi}^{(t)}(s,a) \bigr)^\alpha \exp\Bigg( \frac{1-\alpha}{\beta} \breve{Q}^{(t)}_{\tilde{r}^{(t)}}(s,a) \Bigg).
+\end{align}
+
+We will consider three terms:
+
+\begin{align}
+    \label{eq:term_1}
+    x_1^{(t)} &:= \| \bm{Q}^*_{\tilde{r}^{(t)}}
+    -\bm{Q}^{(t)}_{\tilde{r}^{(t)}} \|_\infty, \\
+    \label{eq:term_2}
+    x_2^{(t)} &:= \| \bm{Q}_{\tilde{r}^{(t)}}^*
+    - \beta \log \bm{\xi}^{(t)} \|_\infty, \\
+    \label{eq:term_3}
+    x_3^{(t)} &:= -\min_{s,a} \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr).
+\end{align}
+We will study the convergence of the sequences $\{x_1^{(t)}\}_{t=0}^T$, $\{x_2^{(t)}\}_{t=0}^T$ and $\{x_3^{(t)}\}_{t=0}^T$. We will study the evolution of all three sequences to show convergence, we start with the term $x_2^{(t+1)} = \|\bm{Q}_{\tilde{r}^{(t+1)}}^* - \beta \log \bm{\xi}^{(t+1)} \|_\infty$:
+\begin{align*}
+    \bm{Q}_{\tilde{r}^{(t+1)}}^* - \beta \log \bm{\xi}^{(t+1)}  
+    &\stackrel{(i)}{=} \bm{Q}_{\tilde{r}^{(t+1)}}^* 
+    - \alpha \beta \log \bm{\xi}^{(t)}
+    - (1-\alpha) \breve{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} \\
+    &= \alpha \Big( \bm{Q}_{\tilde{r}^{(t)}}^* 
+    -  \beta \log \bm{\xi}^{(t)}  \Big) - \alpha \bm{Q}_{\tilde{r}^{(t)}}^*  \\ &
+    - (1-\alpha) \breve{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}}  + \bm{Q}_{\tilde{r}^{(t+1)}}^*  \\
+    &= \alpha \Big( \bm{Q}_{\tilde{r}^{(t)}}^* 
+    -  \beta \log \bm{\xi}^{(t)}  \Big) \\ &
+    + (1-\alpha) \Big( \bm{Q}_{\tilde{r}^{(t)}}^*   - \breve{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}}  \Big)
+    + \Bigl(\bm{Q}_{\tilde{r}^{(t+1)}}^*  - \bm{Q}_{\tilde{r}^{(t)}}^*  \Bigr)\\
+    &= \alpha \Big( \bm{Q}_{\tilde{r}^{(t)}}^* 
+    -  \beta \log \bm{\xi}^{(t)}  \Big) \\ &
+    + (1-\alpha) \Big( \bm{Q}_{\tilde{r}^{(t)}}^* - \bm{Q}_{\tilde{r}^{(t)}}^{(t)} \Big) 
+    + (1-\alpha) \Big( 
+    \bm{Q}_{\tilde{r}^{(t)}}^{(t)}
+    - \breve{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}}  \Big) \\ &
+    + \Bigl(\bm{Q}_{\tilde{r}^{(t+1)}}^*  - \bm{Q}_{\tilde{r}^{(t)}}^*  \Bigr)
+\end{align*}
+Where $(i)$ stems from the definition of the auxiliary sequence recursion (\ref{eq:aux_seq_step}) and the following steps are all obtained by adding terms that cancel out each other until the quantities we care about appear. Using the triangle inequality on infinity norms we get:
+\begin{align*}
+    \| \bm{Q}_{\tilde{r}^{(t+1)}}^* - \beta \log \bm{\xi}^{(t+1)} \|_\infty
+    & \leq \alpha  \| \bm{Q}_{\tilde{r}^{(t)}}^* - \beta \log \bm{\xi}^{(t)} \|_\infty 
+    \\
+    &+ (1-\alpha) \|
+    \bm{Q}_{\tilde{r}^{(t)}}^*  
+    - {\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} 
+    \|_\infty  
+    \\ 
+    &+ (1-\alpha) \|
+        {\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} 
+        - \breve{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} 
+    \|_\infty 
+    \\
+    &+ \| 
+        \bm{Q}_{\tilde{r}^{(t+1)}}^*  
+        - \bm{Q}_{\tilde{r}^{(t)}}^*  
+    \|_\infty.
+\end{align*}
+Which, plugging in the definition of the terms from (\ref{eq:term_1}), (\ref{eq:term_2}) and (\ref{eq:term_3}) can be written as:
+\begin{align*}
+    x_2^{(t+1)} 
+    & \leq \alpha x_2^{(t)}  
+    + (1-\alpha) x_1^{(t)}
+    + (1-\alpha) \|
+        {\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} 
+        - \breve{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} 
+    \|_\infty 
+    + \| 
+        \bm{Q}_{\tilde{r}^{(t+1)}}^*  
+        - \bm{Q}_{\tilde{r}^{(t)}}^*  
+    \|_\infty.
+\end{align*}
+Because of lemma \ref{lemma:optQ_is_lipschitz_wrt_w} we can bound $\| \bm{Q}_{\tilde{r}^{(t+1)}}^*- \bm{Q}_{\tilde{r}^{(t)}}^* \|_\infty \leq C_z$ (where $C_z$ can be computed from the parameter set bounded diameter and the learning rates $\eta_z$) and using lemma \ref{lemma:perturbed_policy_updates} we have: $\|{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} - \breve{\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} \|_\infty \leq \delta_\mathcal{F}$. We thus have:
+\begin{equation}
+    \begin{aligned}
+        \label{eq:ineq_opt_aux}
+        x_2^{(t+1)} 
+        & \leq (1-\alpha) x_1^{(t)} + \alpha x_2^{(t)}  
+        + (1-\alpha) \delta_\mathcal{F} + C_z.
+    \end{aligned}
+\end{equation}
+Now in an effort to study $x_3^{(t)}$, we consider the quantity  $- \Bigl( \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}  - \beta \log \bm{\xi}^{(t+1)} \Bigr) $ we get:
+\begin{align*}
+    - \Bigl( \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}  - \beta \log \bm{\xi}^{(t+1)} \Bigr) 
+    &= 
+    - \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}  
+    + \alpha \beta \log \bm{\xi}^{(t)} + (1-\alpha) \breve{\bm{Q}}_{\tilde{r}^{(t)}}^{(t)}
+    \\
+    &= 
+    - \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}  
+    - \alpha \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr)
+    + (1-\alpha) \breve{\bm{Q}}_{\tilde{r}^{(t)}}^{(t)}
+    + \alpha \bm{Q}^{(t)}_{\tilde{r}^{(t)}}
+    \\ 
+    &= 
+    - \alpha \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr)
+    + (1-\alpha) \Bigl( 
+        \breve{\bm{Q}}_{\tilde{r}^{(t)}}^{(t)} 
+        - \bm{Q}^{(t)}_{\tilde{r}^{(t)}} 
+    \Bigr) \\ & 
+    + \Bigl(
+        \bm{Q}^{(t)}_{\tilde{r}^{(t)}}   
+        - \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}
+    \Bigr)
+    \\ 
+    &= 
+    - \alpha \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr)
+    + (1-\alpha) \Bigl( 
+        \breve{\bm{Q}}_{\tilde{r}^{(t)}}^{(t)} 
+        - \bm{Q}^{(t)}_{\tilde{r}^{(t)}} 
+    \Bigr) \\ & 
+    + \Bigl(
+        \bm{Q}^{(t)}_{\tilde{r}^{(t)}}   
+        - \bm{Q}_{\tilde{r}^{(t)}}^{(t+1)}
+        \Bigr)
+    + \Bigl(
+        \bm{Q}_{\tilde{r}^{(t)}}^{(t+1)}
+        - \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}
+    \Bigr)
+    \\ 
+\end{align*}
+taking maximums on both sides we get:
+\begin{align*}
+    - \min_{s,a} \Bigl( \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}  - \beta \log \bm{\xi}^{(t+1)} \Bigr) 
+    &\leq 
+    - \alpha \min_{s,a} \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr) \\ &
+    +(1-\alpha) \max_{s,a} \overbrace{\Bigl( 
+        \breve{\bm{Q}}_{\tilde{r}^{(t)}}^{(t)}- 
+        \bm{Q}^{(t)}_{\tilde{r}^{(t)}}  \Bigr)}^{\leq \delta_\mathcal{F}} \\ & 
+    + \max_{s,a} \overbrace{\Bigl( 
+        \bm{Q}^{(t)}_{\tilde{r}^{(t)}}   
+        -\bm{Q}_{\tilde{r}^{(t)}}^{(t+1)}
+        \Bigr)}^{\leq \delta_\mathcal{F}\text{ by approx pd lemmma}}
+    + \max_{s,a} \overbrace{\Bigl(
+        \bm{Q}_{\tilde{r}^{(t)}}^{(t+1)}
+        - \bm{Q}_{\tilde{r}^{(t+1)}}^{(t+1)}
+    \Bigr)}^{\leq C_z}
+    \\ 
+    &\leq
+    - \alpha \min_{s,a} \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr)
+    + (3-\alpha) \delta_\mathcal{F} + C_z, \\
+\end{align*}
+we thus have:
+\begin{equation}
+    \label{eq:ineq_min}
+    \begin{aligned}
+        x_3^{(t+1)} &\leq
+        \alpha x_3^{(t+1)}
+        + (3-\alpha) \delta_\mathcal{F} + C_z.
+    \end{aligned}
+\end{equation}
+Finally, in order to study the evolution of $x_1^{(t)}$, we first consider the policy step:
+\begin{align}
+    \pi^{(t+1)}(a|s) := 
+    \frac{1}{Z^{(t)}(s)}
+    \bigl(\pi^{(t)}(a|s)\bigr)^{1-\eta \beta}
+    \exp\bigl(
+        \eta \breve{{Q}}_{\tilde{r}^{(t)}}^{(t)}(s,a)
+    \bigr),
+\end{align}
+together with the auxiliary sequence:
+\begin{align}
+    \pi^{(t)}(a|s) := \frac{\xi^{(t)} (a|s) }{\| \xi^{(t)}(\cdot|s) \|_1}.
+\end{align}
+We can derivate the following inequality:
+\begin{align}
+    \log \pi^{(t+1)}(a|s) 
+    &= \log \xi^{(t+1)}(s,a) - \log \| \xi^{(t+1)}(s,\cdot)\|_1\\
+    &= \alpha \log \xi^{(t)}(s,a) 
+    + \frac{1-\alpha}{\beta}\breve{Q}^{(t)}_{(t)}(s,a)  
+    - \log \| \xi^{(t+1)}(s,\cdot)\|_1.
+\end{align}
+Considering the distance to the optimal $Q$-value one can compute:
+\begin{align*}
+    Q^*_{\tilde{r}^{(t+1)}}(s,a)
+    -Q^{(t+1)}_{\tilde{r}^{(t+1)}}(s,a) = 
+    r(s,a) + \gamma \mathbb{E}_{s'\sim P(\cdot|s,a)} \Big[ V^*_{\tilde{r}^{(t+1)}}(s')  \Big] \\
+    - r(s,a) - \gamma \mathbb{E}_{s'\sim P(\cdot|s,a)} \Big[ V^{t+1}_{\tilde{r}^{(t+1)}}(s')  \Big] 
+    \\
+    =
+    \gamma \mathbb{E}_{s'\sim P(\cdot|s,a)} \Bigg[ 
+            \beta \log \Bigg\| \exp \frac{ Q^{*}_{\tilde{r}^{(t+1)}}(s',\cdot) }{\beta} \Bigg\|_1
+        \Bigg] \\
+    - \gamma \mathbb{E}_{\substack{s'\sim P(\cdot|s,a)\\a' \sim \pi^{(t+1)}(\cdot|s')}} \Bigg[ 
+            Q^{(t+1)}_{\tilde{r}^{(t+1)}}(s',a') - \beta \log \pi^{(t+1)}(a'|s')
+        \Bigg] 
+    \\
+    =
+    \gamma \overbrace{\mathbb{E}_{s'\sim P(\cdot|s,a)} \Bigg[ 
+            \beta \log \Bigg\| \exp \frac{ Q^{*}_{\tilde{r}^{(t+1)}}(s',\cdot) }{\beta} \Bigg\|_1
+            - \beta \log \| \xi^{(t+1)}(s,\cdot)\|_1
+        \Bigg] }^\text{UB with claim \ref{claim:infinity_log_exp}}\\
+    - \gamma \mathbb{E}_{\substack{s'\sim P(\cdot|s,a)\\a' \sim \pi^{(t+1)}(\cdot|s')}} \Bigg[ 
+            Q^{(t+1)}_{\tilde{r}^{(t+1)}}(s',a') - \beta 
+            \Bigl(
+                \alpha \log \xi^{(t)}(s,a) 
+                + \frac{1-\alpha}{\beta}\breve{Q}^{(t)}_{(t)}(s,a)  
+            \Bigr)    
+        \Bigg].
+    \end{align*}
+    And hence:
+    \begin{align*}
+        \| Q^*_{\tilde{r}^{(t+1)}}(s,a)
+        -Q^{(t+1)}_{\tilde{r}^{(t+1)}}(s,a) \|_\infty \\
+        \leq \gamma \overbrace{\| \bm{Q}_{\tilde{r}^{(t+1)}}^* - \beta \log \bm{\xi}^{(t+1)} \|_\infty }^\text{Upper bound with (\ref{eq:ineq_opt_aux})}
+        - \gamma \overbrace{\min_{s,a} \Bigl(
+            Q^{(t+1)}_{\tilde{r}^{t+1}}(s,a) - \beta \log \xi^{(t+1)}(s,a)
+        \Bigr)}^\text{Upper bound with (\ref{eq:ineq_min})}\\
+        \leq \gamma
+        \Biggl(
+            \alpha  \| \bm{Q}_{\tilde{r}^{(t)}}^* - \beta \log \bm{\xi}^{(t)} \|_\infty 
+            + (1-\alpha) \|
+                \bm{Q}_{\tilde{r}^{(t)}}^*  
+                - {\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} \|_\infty  
+            + (1-\alpha) \delta_\mathcal{F} + C_z
+        \Biggr) \\
+        - \gamma \Biggl(
+            \alpha \min_{s,a} \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr) + 
+            (3-\alpha) \delta_\mathcal{F} + C_z    
+        \Biggr) \\
+        =
+        \gamma \alpha \| \bm{Q}_{\tilde{r}^{(t)}}^* 
+        - \beta \log \bm{\xi}^{(t)} \|_\infty 
+        +\gamma(1-\alpha) \| \bm{Q}_{\tilde{r}^{(t)}}^*  
+        - {\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} \|_\infty  \\
+        \gamma \alpha  -\min_{s,a} \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr) + 
+        \gamma \Bigl(  (4-2\alpha)\delta_\mathcal{F}+2C_z  \Bigr).
+    \end{align*}
+    Which leaves us with:
+    \begin{equation}
+        \begin{aligned}
+            \label{eq:ineq_q_subopt}
+            \| Q^*_{\tilde{r}^{(t+1)}}(s,a)
+            -Q^{(t+1)}_{\tilde{r}^{(t+1)}}(s,a) \|_\infty 
+            &\leq
+            \gamma \alpha \| \bm{Q}_{\tilde{r}^{(t)}}^* 
+            - \beta \log \bm{\xi}^{(t)} \|_\infty \\ &
+            +\gamma(1-\alpha) \| \bm{Q}_{\tilde{r}^{(t)}}^*  
+            - {\bm{Q}}^{(t)}_{\tilde{r}^{(t)}} \|_\infty  \\ &
+            -\gamma \alpha  \min_{s,a} \Bigl(\bm{Q}^{(t)}_{\tilde{r}^{(t)}} - \beta \log \bm{\xi}^{(t)}  \Bigr) \\ &
+            +  \gamma \Bigl(  (4-2\alpha)\delta_\mathcal{F}+2C_z  \Bigr).
+        \end{aligned}
+    \end{equation}
+    Which once we plug in our identified terms, gives us:
+    \begin{equation}
+        x_1^{(t+1)} \leq
+        \gamma(1-\alpha)  x_1^{(t)}
+        +\gamma \alpha x_2^{(t)}
+        +\gamma \alpha  x_3^{(t)}
+        + \gamma \Bigl(  (4-2\alpha)\delta_\mathcal{F}+2C_z  \Bigr), 
+    \end{equation}
+
+    \subsubsection{An affine inequality system}
+
+    We have thus computed three bounds, (\ref{eq:ineq_opt_aux}), (\ref{eq:ineq_min}) and (\ref{eq:ineq_q_subopt}), which are expressed recursively as functions of the terms,
+    this enables us to rewrite the inequality system as the following affine system:
+    \begin{align}
+        \label{eq:affine_system}
+        \overbrace{\begin{bmatrix}
+            x_1^{(t+1)}\\
+            x_2^{(t+1)}\\
+            x_3^{(t+1)} 
+        \end{bmatrix}}^{:=\bm{x}^{(t+1)}}
+        \leq 
+        \overbrace{
+            \begin{bmatrix}
+                \gamma (1-\alpha) & \gamma \alpha &  \gamma \alpha \\
+                 (1-\alpha) & \alpha & 0 \\
+                 0 & 0 & \alpha 
+            \end{bmatrix}
+            }^{:=A}
+        \overbrace{\begin{bmatrix}
+            x_1^{(t)}\\
+            x_2^{(t)}\\
+            x_3^{(t)}
+        \end{bmatrix}}^{:=\bm{x}^{(t)}}+
+        \overbrace{
+        \begin{bmatrix}
+            \gamma \Bigl(  (4-2\alpha)\delta_\mathcal{F}+2C_z  \Bigr)\\
+            \bigl( (1-\alpha) \delta_\mathcal{F} + C_z\bigr) \\
+            \bigl((3-\alpha) \delta_\mathcal{F} + C_z\bigr)
+        \end{bmatrix}}^{:=b}.
+    \end{align}
+    Which we can study using linear system theory. The eigenvalues of the matrix $A$ are the following:
+    \begin{align*}
+        \lambda_1 = \alpha + \gamma (1-\alpha) = 1 - (1-\gamma)\eta\beta, && 
+        \lambda_2 = \alpha = 1-\eta\beta, && 
+        \lambda_3 = 0,
+    \end{align*}
+    and they are associated with the following eigenvectors:
+    \begin{align*}
+        \bm{v}_1 = \begin{bmatrix}
+            \gamma \\ 1 \\ 0
+        \end{bmatrix}, &&
+        \bm{v}_2 = \begin{bmatrix}
+            0 \\ -1 \\ 1
+        \end{bmatrix}, &&
+        \bm{v}_3 = \begin{bmatrix}
+            \frac{\alpha}{1 - \alpha} \\ 1 \\ 0
+        \end{bmatrix}.
+    \end{align*}
+
+    Assume that our system starts at some point $\bm{x}^{(0)}$, and consider it's representation into the basis formed by the eigenvectors $\bm{v}_1,\bm{v}_2,\bm{v}_3$:
+    \begin{align*}
+        \bm{x}_0 = \sum_{i\in [3]} \bm{v_i}a_i.
+    \end{align*}
+    The iterations of the affine system (\ref{eq:affine_system}) can thus be bounded by:
+    \begin{align*}
+        \bm{x}_{t} 
+        &= A\bm{x}_{t-1} + \bm{b} = (A)^t \bm{x}_t + \sum_{t=0}^{t-1}(A^t)\bm{b}\\
+        &= \sum_{i\in [3]} \lambda^t \bm{v_i} a_i + \sum_{t=0}^{t-1}(A^t)\bm{b}\\
+        &\stackrel{(i)}{\leq} \sum_{i\in [3]} \lambda^t \bm{v_i} a_i + \sum_{t=0}^{+\infty}(A^t)\bm{b}\\
+        &\stackrel{(ii)}{=} \sum_{i\in [3]} \lambda_i^t \bm{v_i} a_i + (I-A)^{-1}\bm{b}\\
+        &\stackrel{(iii)}{=} \lambda_1^t \begin{bmatrix}
+            \gamma \\ 1 \\ 0
+        \end{bmatrix} a_1
+         + \lambda_2^t   \begin{bmatrix}
+            0 \\ -1 \\ 1
+        \end{bmatrix} a_2 +  (I-A)^{-1}\bm{b}
+    \end{align*}
+    where the inequality in $(i)$ is element-wise true because all elements of the vector $\bm{b}$ are positive and all eigenvalues of $A$ are positive, equality $(ii)$ is just a matrix geometric series. Note that in $(iii)$ we omit the third eigenvector as it's eigenvalues is $0$. \\
+
+    Explicit computation tells us that the coefficients $a_1,a_2,a_3$ are given by:
+    \begin{align*}
+        a_1 = \frac{1}{\alpha + \alpha\gamma - \gamma} \Big( (\alpha - 1)x_1^{(0)}+x_2^{(0)}+x_3^{(0)} \Big),\\
+        a_2 = x_3^{(0)},\\
+        a_3 = \frac{1 - \alpha}{\alpha + \alpha\gamma - \gamma} (x_1^{(0)} - \gamma x_2^{(0)} - \gamma x_3^{(0)}).
+    \end{align*}
+
+    Introducing the constants into the linear system, we get:
+    \begin{align*}
+        \overbrace{\begin{bmatrix}
+            x_1^{(t)}\\
+            x_2^{(t)}\\
+            x_3^{(t)} 
+        \end{bmatrix}}^{:=\bm{x}^{(t)}}
+        &\leq
+        \frac{(\alpha - 1)x_1^{(0)}+x_2^{(0)}+x_3^{(0)} }{\alpha + \alpha\gamma - \gamma}
+        \lambda_1^t 
+        \begin{bmatrix}
+            \gamma \\ 1 \\ 0
+        \end{bmatrix}
+        + x_3^{(0)}
+        \lambda_2^t
+        \begin{bmatrix}
+            0 \\ -1 \\ 1
+        \end{bmatrix}
+        \\ & +
+        \frac{1}{(\alpha-1)(\gamma-1)}
+        \begin{bmatrix}
+            2\gamma (C_z+\delta_\mathcal{F}(2-\alpha))\\
+            (C_z-\alpha \delta_\mathcal{F}) (1+\gamma) + \delta_\mathcal{F} (3 \gamma + 1) \\
+            -(C_z+\delta_\mathcal{F} (3-\alpha))(\gamma - 1)
+        \end{bmatrix}.
+    \end{align*}
+
+    We mostly care about the $x_1^{(t)}$ term, we will only explicitly compute this one:
+    \begin{align*}
+        x_1^{(t)} &\leq\gamma \frac{(\alpha - 1)x_1^{(0)}+x_2^{(0)}+x_3^{(0)} }{\alpha + \alpha\gamma - \gamma}
+        (1 - (1-\gamma)\eta\beta)^t 
+        + \frac{2\gamma (C_z+\delta_\mathcal{F}(2-\alpha))}{(\alpha-1)(\gamma-1)} \\
+        \| \bm{Q}^*_{\tilde{r}^{(t)}}
+        -\bm{Q}^{(t)}_{\tilde{r}^{(t)}} \|_\infty 
+        &\leq\gamma \frac{(\alpha - 1)
+        \| \bm{Q}^*_{\tilde{r}^{(t)}}
+        -\bm{Q}^{(0)}_{\tilde{r}^{(0)}} \|_\infty 
+        +x_2^{(0)}+x_3^{(0)} }{\alpha + \alpha\gamma - \gamma}
+        (1 - (1-\gamma)\eta\beta)^t  \\ &
+        + \frac{2\gamma (C_z+\delta_\mathcal{F}(2-\alpha))}{(\alpha-1)(\gamma-1)} \\
+    \end{align*}
+
+
