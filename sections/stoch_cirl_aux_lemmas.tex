@@ -1,0 +1,104 @@
+\subsubsection{Proof of lemma \ref{lemma:perturbed_policy_updates}}
+\label{sec:proof_perturbed_policy_update}
+\begin{proof}
+    Recall that:
+    \begin{align}
+        \label{eq:fim_min_form}
+        \bm{w}_\theta 
+        = \bigl(\mathcal{F}^\theta\bigr)^\dagger \nabla_\theta J(\theta) 
+        = \arg\min_{\bm{w}\in \mathbb{R}^{S\times A}} 
+        \Big\|
+        \mathcal{F}^\theta \textbf{w} - \nabla_\theta J (\theta)
+        \Big\|_2^2,
+    \end{align}
+    where $\mathcal{F}^\theta$ is the Fisher Information Matrix (FIM), given by:
+    \begin{align*}
+        \mathcal{F}^\theta = \mathbb{E}_{(s,a) \sim \mu(\theta)}
+        \Bigg[
+            \big(  \nabla_\theta \log \pi^\theta(a|s)  \big)
+            \big(  \nabla_\theta \log \pi^\theta(a|s)  \big)^T
+            \Bigg].
+        \end{align*}
+        To show our result, we consider the perturbed gradient step:
+        \begin{align*}
+            \hat{\bm{w}}_\theta 
+            = \bigl(\mathcal{F}^\theta\bigr)^\dagger \hat{\nabla}_\theta J(\theta) 
+            = \arg\min_{\bm{w}\in \mathbb{R}^{S\times A}} 
+            \Big\|
+            \mathcal{F}^\theta \textbf{w} - \hat{\nabla}_\theta J (\theta)
+            \Big\|_2^2.
+        \end{align*}
+        Let us look at the matrix-vector product $\mathcal{F}^\theta \bm{w}$:
+        \begin{align*}
+            \big( \mathcal{F}^\theta \bm{w} \big)(s,a) &
+            = \mathbb{E}_{\substack{s' \sim \mu_s(\theta) \\ a' \sim \pi^\theta(\cdot | s)}}
+            \Bigg[
+                \frac{\partial \log \pi^\theta(a'|s')}{\partial \theta(s,a)}
+                \Big( \sum_{\tilde{a},\tilde{s}} \frac{\partial \log \pi^\theta(a'|s')}{\partial \theta(\tilde{s},\tilde{a})}  w_{\tilde{s},\tilde{a}} \Big)
+            \Bigg]\\
+            & =
+            \mu_s^\theta(s) \pi^\theta(a|s) \Bigg[ w_{s,a} - \sum_a \pi^\theta(a|s) w_{s,a}  \Bigg].
+        \end{align*}
+        Plugging the matrix vector product above into (\ref{eq:fim_min_form}), we get the following form:
+        \begin{align*}
+            \bm{w}_\theta &
+            = \arg\min_{\bm{w}\in \mathbb{R}^{S\times A}} 
+            \Big\|
+            \mathcal{F}^\theta \textbf{w} - \nabla_\theta J (\theta)
+            \Big\|_2^2 \\
+            & \stackrel{(i)}{=} \arg\min_{\bm{w}\in \mathbb{R}^{S\times A}}
+            \sum_{s,a} 
+            \Biggl(  
+                \mu_s^\theta(s) \pi^\theta(a|s) 
+                \Big[ w_{s,a} - \overbrace{\sum_a \pi^\theta(a|s) w_{s,a}}^{:=c(s)} \Big] - 
+                \frac{\partial \hat{J}(\theta)}{\theta(s,a)}
+            \Biggr)^2 \\
+            & = \arg\min_{\bm{w}\in \mathbb{R}^{S\times A}}
+            \sum_{s,a} 
+            \Biggl(  
+                \mu_s^\theta(s) \pi^\theta(a|s) \Big[ w_{s,a} - c(s) \Big] - 
+                \frac{\partial {J}(\theta)}{\theta(s,a)} - \delta(s,a)
+            \Biggr)^2\\
+            & \stackrel{(ii)}{=}  \arg\min_{\bm{w}\in \mathbb{R}^{S\times A}}
+            \sum_{s,a} 
+            \Biggl(  
+                \mu_s^\theta(s) \pi^\theta(a|s) \Big[ w_{s,a} - c(s) - A^{\pi^\theta}(s,a) \Big] - \delta(s,a)
+            \Biggr)^2 \\
+            & \stackrel{(iii)}{=}  \arg\min_{\bm{w}\in \mathbb{R}^{S\times A}}
+            \sum_{s,a} 
+            \Biggl(  
+                \mu_s^\theta(s) \pi^\theta(a|s) \Big[ w_{s,a} - c(s) - A^{\pi^\theta}(s,a) - \frac{\delta(s,a)}{\mu^\theta(s,a)}  \Big] 
+            \Biggr)^2.
+        \end{align*}
+        In which in $(i)$ we introduce our matrix vector product into the norm, in two $(ii)$ we plugin the policy gradient theorem and then in $(iii)$ we rearrange to deduce the impact of the perturbation. Choosing $w^\theta_{s,a}$ as:
+        \begin{align}
+            w^\theta_{s,a} = c(s) + A^{\pi^\theta}(s,a) + \frac{\delta(s,a)}{\mu^\theta(s,a)}
+        \end{align}
+        minimizes the function. Hence we have:
+        \begin{align}
+            \Big[ \bigl(\mathcal{F}^\theta\bigr)^\dagger \nabla_\theta J(\theta) \Big](s,a)
+            = c(s) + A^{\pi^\theta}(s,a) + \frac{\delta(s,a)}{\mu^\theta(s,a)}.
+        \end{align}
+        Now we can follow the normal MWU derivation steps and get to the policy-update:
+        \begin{align*}
+            \pi^{(t+1)}(a|s) 
+            &= \frac{\exp \big( \theta^{t+1}(s,a) \big) }{\sum_{a'} \exp \theta^{t+1}(s,a')} \\
+            &= \frac{  
+                \exp \Bigg( \theta^{t}(s,a) + \eta \Big[ \bigl(\mathcal{F}^{\theta^t}\bigr)^\dagger \hat{\nabla}_\theta J(\theta^t) \Big](s,a) \Bigg)  }{
+                    \sum_{a'} \exp \Bigg( \theta^{t}(s,a') + \eta \Big[ \bigl(\mathcal{F}^{\theta^t}\bigr)^\dagger \hat{\nabla}_\theta J(\theta^t) \Big](s,a) \Bigg) } \\
+            &= \frac{  
+                \exp \Bigg( \theta^{t}(s,a) + \eta \Big[ c(s) + A^{\pi^\theta}(s,a) + \frac{\delta(s,a)}{\mu^\theta(s,a)} \Big]  \Bigg) }{ \Bigg( 
+                    \sum_{a'} \exp \theta^{t}(s,a') + \eta \Big[  c(s) + A^{\pi^\theta}(s,a') + \frac{\delta(s,a')}{\mu^\theta(s,a')} \Big] \Bigg) } \\
+            &\propto \pi^{t}(s,a) \cdot
+                \eta \Big[ Q^{\pi^\theta}(s,a) - \log \pi^\theta(a|s) - V^{\pi^\theta}(s) + \frac{\delta(s,a)}{\mu^\theta(s,a)} \Big]   \\
+            &\propto \pi^{t}(s,a) \cdot \exp \Bigg( 
+                \eta \Big[ Q^{\pi^\theta}(s,a) - \log \pi^\theta(a|s) + \frac{\delta(s,a)}{\mu^\theta(s,a)} \Big] \Bigg)  \\
+            &=  \Big( \pi^{t}(s,a) \Big)^{1-\eta \beta}  \exp \Bigg( 
+                \eta \Big[ \overbrace{Q^{\pi^\theta}(s,a)  + \frac{\delta(s,a)}{\mu^\theta(s,a)}}^{=\hat{Q}^{\pi^\theta}(s,a)} \Big] \Bigg).
+        \end{align*}
+        Where $\hat{Q}^{\pi^\theta}(s,a)$ is given by:
+        \begin{align*}
+            \hat{Q}^{\pi^\theta}(s,a) = Q^{\pi^\theta}(s,a)  + \frac{\delta(s,a)}{\mu^\theta(s,a)}.
+        \end{align*}
+        The proof is complete.
+\end{proof}
